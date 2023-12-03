@@ -2,11 +2,12 @@ import socket
 import multiprocessing
 
 import messageFormater as formater
+import deviceInfo as deviceInfo
 
 buffer_size = 1024
 
 class BroadcastListener(multiprocessing.Process):
-    def __init__(self, device_info_static, device_info_dynamic, shared_queue):
+    def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue):
         super(BroadcastListener, self).__init__()
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
@@ -29,7 +30,7 @@ class BroadcastListener(multiprocessing.Process):
         finally:
             self.listen_socket.close()
 
-    def listen(self, device_info_static, device_info_dynamic):
+    def listen(self, device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic):
         #recvfrom is waiting until it recieves something and can not be exited with KeyboardInterrupt
         while self.isRunning:
             try:
@@ -43,7 +44,7 @@ class BroadcastListener(multiprocessing.Process):
                 #TODO dose not work jet
                 self.isRunning = False
 
-    def answer(self, sender_address, message):
+    def answer(self, sender_address, message: str):
         self.listen_socket.sendto(str.encode(message), sender_address)
 
 

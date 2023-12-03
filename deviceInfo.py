@@ -4,7 +4,7 @@ import ipaddress
 import userIO
 
 class DeviceInfoStatic():
-    def __init__(self, my_peer_ID):
+    def __init__(self, my_peer_ID: int):
         #self aplication
         self.MY_STORAGE = ""
         self.PEER_ID = my_peer_ID
@@ -23,7 +23,7 @@ class DeviceInfoStatic():
         print(f"Broadcast IP: {self.LAN_BOADCAST_IP}, Broadcast Port: {self.LAN_BROADCAST_PORT}\n")
 
 class DeviceInfoDynamic():
-    def __init__(self, my_peer_ID):
+    def __init__(self, my_peer_ID: int):
         #global view
         self.PEERS = [my_peer_ID]
         self.GROUPS = []

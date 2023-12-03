@@ -6,7 +6,7 @@ import deviceInfo as deviceInfo
 import listener as bListen
 
 
-def establisch_listeners(device_info_static, device_info_dynamic, shared_queue):
+def establisch_listeners(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue):
     listeners = []
     p_Listen = bListen.BroadcastListener(device_info_static, device_info_dynamic, shared_queue)
     listeners.append(p_Listen)
