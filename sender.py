@@ -2,6 +2,7 @@ import socket
 import deviceInfo as deviceInfo
 
 broadcast_socket_sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+broadcast_socket_sender.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 buffer_size = 1024
 
 def basic_broadcast(ip, port, message: str):
