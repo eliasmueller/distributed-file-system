@@ -115,6 +115,7 @@ class BullyAlgorithm(multiprocessing.Process):
             time.sleep(0.1)
         self.received_higher_election_inquiry = []
         self.received_lower_election_inquiry = []
+        self.election_id = None
 
     def send_election_inquiry(self, recipient_id: str, recipient_ip: None):
         if not recipient_ip:
