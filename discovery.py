@@ -7,9 +7,6 @@ import deviceInfo as deviceInfo
 import sender as bSend
 import messageFormater as formater
 
-import os
-
-
 def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic,
                    shared_queue: multiprocessing.Queue):
     # Send broadcast message
@@ -21,8 +18,6 @@ def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, device_info_
     # p_send_peer.start()
     # p_send_leader.join()
     # p_send_peer.join()
-
-    print("discovery pid:", os.getpid())
 
     # discover peers
     message = formater.request_discovery(device_info_static, device_info_dynamic)
