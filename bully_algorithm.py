@@ -10,6 +10,8 @@ import electionMessage
 import sender as bSend
 import util
 
+import os
+
 
 class BullyAlgorithm(multiprocessing.Process):
     def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic,
@@ -26,6 +28,8 @@ class BullyAlgorithm(multiprocessing.Process):
         self.election_id = None
         self.received_higher_election_inquiry = []
         self.received_lower_election_inquiry = []
+
+        print("bully pid:", os.getpid())
 
     def update_from_queue(self):
         if not self.shared_queue.empty():
