@@ -39,7 +39,7 @@ def listen_for_file(conn_socket, device_info_static: deviceInfo.DeviceInfoStatic
         filepath = f"{device_info_static.MY_STORAGE}/{filename}"
         with open(filepath, "wb") as f:
             if received[2] != "":  # possibly already the beginning of the file
-                f.write(received[2])
+                f.write(received[2]) # TODO this is not working properly yet
             while True:
                 bytes_read = conn_socket.recv(buffer_size)
                 if not bytes_read:
