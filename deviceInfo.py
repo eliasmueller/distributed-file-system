@@ -5,9 +5,9 @@ import userIO
 
 
 class DeviceInfoStatic:
-    def __init__(self, my_peer_ID: int):
+    def __init__(self, my_peer_ID: int, my_storage: str):
         # self application
-        self.MY_STORAGE = ""
+        self.MY_STORAGE = my_storage
         self.PEER_ID = my_peer_ID
 
         # networking
@@ -56,7 +56,8 @@ def get_broadcast_ip(device_ip, mask):
 
 def lear_about_myself():
     my_peer_id = userIO.ask_for_unique_ID()
-    device_info_static = DeviceInfoStatic(my_peer_id)
+    my_storage = userIO.ask_for_folder_path_to_synchronise()
+    device_info_static = DeviceInfoStatic(my_peer_id, my_storage)
     device_info_dynamic = DeviceInfoDynamic(my_peer_id)
     device_info_static.print_info()
     device_info_dynamic.print_info()
