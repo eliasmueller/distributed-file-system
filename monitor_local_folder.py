@@ -23,6 +23,7 @@ class FolderMonitor:
                 os.listdir(self.device_info_static.MY_STORAGE)}
 
     def check_folder_changes(self):
+        # TODO supervise that changes triggered by remote updates are ignored
         current_state = self.get_folder_state()
 
         added_files = [f for f in current_state if f not in self.file_state]
@@ -30,14 +31,15 @@ class FolderMonitor:
         modified_files = [f for f in current_state if current_state[f] != self.file_state.get(f, 0)]
 
         if added_files or deleted_files or modified_files:
-            self.notify_all_peers_about_file_change(added_files + deleted_files + modified_files)
+            self.notify_all_peers_about_file_change(list(set(added_files + deleted_files + modified_files)))
 
         self.file_state = current_state
 
     def run(self):
         try:
             while self.is_running:
-                self.update_from_queue()
+                # TODO we need an observer pattern to detect this properly
+                # self.update_from_queue()
                 self.check_folder_changes()
                 time.sleep(1)
         except KeyboardInterrupt:
@@ -54,11 +56,11 @@ class FolderMonitor:
                         ip = self.device_info_dynamic.PEER_IP_DICT[p]
                         file_transfer.transfer_file(ip=ip, port=7771, device_info_static=self.device_info_static, filename=f)
 
-    def update_from_queue(self):
-        if not self.shared_queue.empty():
-            queue_message = util.consume(self.shared_queue)
-            if isinstance(queue_message, deviceInfo.DeviceInfoDynamic):
-                self.device_info_dynamic = queue_message
-            # If not necessary for me, put back
-            else:
-                self.shared_queue.put(queue_message)
+    # def update_from_queue(self):
+    #     if not self.shared_queue.empty():
+    #         queue_message = util.consume(self.shared_queue)
+    #         if isinstance(queue_message, deviceInfo.DeviceInfoDynamic):
+    #             self.device_info_dynamic = queue_message
+    #         # If not necessary for me, put back
+    #         else:
+    #             self.shared_queue.put(queue_message)
