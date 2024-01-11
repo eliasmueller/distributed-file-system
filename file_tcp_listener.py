@@ -42,6 +42,7 @@ class FileListener(multiprocessing.Process):
                     file_transfer.listen_for_file(conn_socket, self.device_info_static)
             except KeyboardInterrupt:
                 self.isRunning = False
+            # TODO proper exception handling
             except Exception:
                 continue
 

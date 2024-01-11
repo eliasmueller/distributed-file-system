@@ -4,8 +4,6 @@ import time
 
 import deviceInfo
 import file_transfer
-import util
-
 
 class FolderMonitor:
     def __init__(self,
