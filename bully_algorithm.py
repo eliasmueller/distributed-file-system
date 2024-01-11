@@ -31,7 +31,10 @@ class BullyAlgorithm(multiprocessing.Process):
         if not self.shared_queue.empty():
             queue_message = util.consume(self.shared_queue)
             if isinstance(queue_message, deviceInfo.DeviceInfoDynamic):
-                self.device_info_dynamic = queue_message
+                if not self.device_info_dynamic == queue_message:
+                    self.device_info_dynamic = queue_message
+                else:
+                    util.produce_device_info_dynamic(self.shared_queue, queue_message)
             elif isinstance(queue_message, electionMessage.ElectionMessage):
                 self.handle_election_message(queue_message)
 
@@ -141,6 +144,8 @@ class BullyAlgorithm(multiprocessing.Process):
             self.device_info_dynamic.PEERS.append(message.SENDER_ID)
             self.device_info_dynamic.PEER_IP_DICT[message.SENDER_ID] = message.SENDER_IP
             util.produce_device_info_dynamic(self.shared_queue, self.device_info_dynamic)
+            util.produce_device_info_dynamic(self.shared_queue, self.device_info_dynamic)
+
 
     def handle_election_message(self, message: electionMessage.ElectionMessage):
         self.update_device_info_dynamic(message)

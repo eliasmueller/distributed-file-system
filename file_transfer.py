@@ -22,13 +22,10 @@ def transfer_file(ip, port, device_info_static: deviceInfo.DeviceInfoStatic, fil
     tcp_socket_sender.close()
 
 
-def listen_for_file(ip, port, device_info_static: deviceInfo.DeviceInfoStatic):
-    tcp_socket_sender.bind((ip, port))
-    tcp_socket_sender.listen(5)  # 5 max connect attempts
-    conn_socket, peer_ip = tcp_socket_sender.accept()
+def listen_for_file(conn_socket, device_info_static: deviceInfo.DeviceInfoStatic):
 
     filename = conn_socket.recv(buffer_size).decode()
-    print(f"Receiving file {filename} from {peer_ip}.")
+    print(f"Receiving file {filename}.")
 
     filepath = f"{device_info_static.MY_STORAGE}/{filename}"
     with open(filepath, "wb") as f:
