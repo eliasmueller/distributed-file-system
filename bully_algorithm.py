@@ -32,11 +32,7 @@ class BullyAlgorithm(multiprocessing.Process):
         self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
         if not self.shared_queue.empty():
             queue_message = util.consume(self.shared_queue)
-            if isinstance(queue_message, deviceInfo.DeviceInfoDynamic):
-                pass
-                # self.device_info_dynamic = queue_message
-            elif isinstance(queue_message, electionMessage.ElectionMessage):
-                self.handle_election_message(queue_message)
+            self.handle_election_message(queue_message)
 
     def run(self):
         while self.is_running:
