@@ -12,11 +12,12 @@ import util
 
 class BullyAlgorithm(multiprocessing.Process):
     def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic,
-                 device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue):
+                 device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: multiprocessing.managers.DictProxy):
         super(BullyAlgorithm, self).__init__()
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
         self.shared_queue = shared_queue
+        self.shared_dict = shared_dict
         # Init Bully Properties
         self.peer_id = device_info_static.PEER_ID
         self.leader_id = None
@@ -28,13 +29,12 @@ class BullyAlgorithm(multiprocessing.Process):
         self.run()
 
     def update_from_queue(self):
+        self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
         if not self.shared_queue.empty():
             queue_message = util.consume(self.shared_queue)
             if isinstance(queue_message, deviceInfo.DeviceInfoDynamic):
-                if not self.device_info_dynamic == queue_message:
-                    self.device_info_dynamic = queue_message
-                else:
-                    util.produce_device_info_dynamic(self.shared_queue, queue_message)
+                pass
+                # self.device_info_dynamic = queue_message
             elif isinstance(queue_message, electionMessage.ElectionMessage):
                 self.handle_election_message(queue_message)
 
@@ -143,9 +143,7 @@ class BullyAlgorithm(multiprocessing.Process):
         if not self.device_info_dynamic.PEERS.__contains__(message.SENDER_ID):
             self.device_info_dynamic.PEERS.append(message.SENDER_ID)
             self.device_info_dynamic.PEER_IP_DICT[message.SENDER_ID] = message.SENDER_IP
-            util.produce_device_info_dynamic(self.shared_queue, self.device_info_dynamic)
-            util.produce_device_info_dynamic(self.shared_queue, self.device_info_dynamic)
-
+            self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
 
     def handle_election_message(self, message: electionMessage.ElectionMessage):
         self.update_device_info_dynamic(message)

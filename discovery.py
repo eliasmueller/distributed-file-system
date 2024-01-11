@@ -8,7 +8,7 @@ import sender as bSend
 import messageFormater as formater
 
 def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic,
-                   shared_queue: multiprocessing.Queue):
+                   shared_queue: multiprocessing.Queue, shared_dict: multiprocessing.managers.DictProxy):
     # Send broadcast message
     # message = device_info.MY_IP + ' sent a broadcast message'
     # p_send = multiprocessing.Process(target=bSend.broadcast, args=(device_info.LAN_BOADCAST_IP, device_info.LAN_BROADCAST_PORT, message))
@@ -37,7 +37,7 @@ def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, device_info_
     # broadcast collected group view to update als views of other peers
     message = formater.update_peer_view(device_info_static, device_info_dynamic)
     bSend.basic_broadcast(device_info_static.LAN_BROADCAST_IP, device_info_static.LAN_BROADCAST_PORT, str(message))
-    util.produce_device_info_dynamic(shared_queue, device_info_dynamic)
+    shared_dict.update(device_info_dynamic=device_info_dynamic)
 
 
 def interpret_discovery_answers(device_info_static: deviceInfo.DeviceInfoStatic, answers: List[str]) -> []:

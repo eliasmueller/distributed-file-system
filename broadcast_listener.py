@@ -9,11 +9,12 @@ static_broadcast_ip = "0.0.0.0"
 
 
 class BroadcastListener(multiprocessing.Process):
-    def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue):
+    def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: multiprocessing.managers.DictProxy):
         super(BroadcastListener, self).__init__()
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
         self.shared_queue = shared_queue
+        self.shared_dict = shared_dict
         # Listening port
         # Create a UDP socket
         self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
