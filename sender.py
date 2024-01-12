@@ -1,8 +1,13 @@
 import socket
 import deviceInfo as deviceInfo
 
+#self operating system
+#w = windows, m = mac OS, l = linux
+OPERATING_SYSTEM = "w"
+
 broadcast_socket_sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-broadcast_socket_sender.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+if OPERATING_SYSTEM != "w":
+    broadcast_socket_sender.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 buffer_size = 1024
 
 
