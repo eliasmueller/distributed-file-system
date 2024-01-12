@@ -1,10 +1,12 @@
 import multiprocessing
+from multiprocessing.sharedctypes import Array
 
 import bully_algorithm
 import util
 import discovery
 import deviceInfo as deviceInfo
 import listener as bListen
+import heartbeat 
 
 def establish_listeners(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue):
     listeners = []
@@ -24,6 +26,7 @@ def start_bully(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dyn
 if __name__ == '__main__':
     device_info_static, device_info_dynamic = deviceInfo.lear_about_myself()
 
+    leader_ip_shared = multiprocessing.Array('c', b'unavailable', lock=False)
     shared_queue = multiprocessing.Queue()
 
     p_bully = start_bully(device_info_static, device_info_dynamic, shared_queue)
@@ -34,6 +37,8 @@ if __name__ == '__main__':
     p_discovery.start()
     p_discovery.join()
 
+    heartbeat.send_heartbeat_to_leader(device_info_static, device_info_dynamic)
+
     for listener in listeners:
         listener.join()
 
@@ -41,3 +46,6 @@ if __name__ == '__main__':
     if isinstance(queue_message, deviceInfo.DeviceInfoDynamic):
         device_info_dynamic = queue_message
         device_info_dynamic.print_info()
+
+    print("leader ip = ") 
+    print(leader_ip_shared.value)

@@ -47,6 +47,9 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info
         if device_info_static.PEER_ID != sender_id:
             election_extractor(message_specification, sender_id, election_id, message_sender_ip, shared_queue)
         pass
+    elif message_type == 'heartbeat':
+        print(f"Heartbeat received: {message}")
+        pass
     elif message_type == 'ACK':
         pass
     else:
