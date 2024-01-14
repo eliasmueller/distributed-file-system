@@ -12,12 +12,6 @@ def consume(shared_queue: multiprocessing.Queue):
     return complex_object
 
 
-def produce_device_info_dynamic(shared_queue: multiprocessing.Queue, complex_object: deviceInfo.DeviceInfoDynamic):
-    # Serialize and put the complex object into the queue
-    serialized_object = pickle.dumps(complex_object)
-    shared_queue.put(serialized_object)
-
-
 def produce_election_message(shared_queue: multiprocessing.Queue, election_message: electionMessage.ElectionMessage):
     serialized_object = pickle.dumps(election_message)
     shared_queue.put(serialized_object)
