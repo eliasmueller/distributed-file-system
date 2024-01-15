@@ -9,14 +9,15 @@ class heartbeat:
     def __init__(self, shared_dict: DictProxy, interval = 5):
         self.shared_dict = shared_dict
         self.interval = interval
-        self.leader_ip = ""
-        self.leader_port = 5971
+        self.leader_ip = None
+        self.leader_port = 17432
         self.run()
 
     def run(self):
         while True:
             self.get_device_info_update()
-            self.send_heartbeat_to_leader()
+            if self.leader_ip is not None:
+                self.send_heartbeat_to_leader()
             time.sleep(self.interval)
 
     def get_device_info_update(self):
