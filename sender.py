@@ -35,7 +35,7 @@ def send_unicast(ip, port, message: str):
     unicast_socket_sender.sendto(str.encode(message), (ip, port))
 
 def listen_to_unicast(timeout_seconds: int):
-    unicast_socket_sender.bind(('', 42044))
+    unicast_socket_sender.bind((socket.gethostbyname(socket.gethostname()), 42044))
     unicast_socket_sender.settimeout(timeout_seconds)
     while True:
         try:

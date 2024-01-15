@@ -6,7 +6,8 @@ import deviceInfo
 import sender as bSend
 
 class heartbeat:
-    def __init__(self, shared_dict: DictProxy, interval = 5):
+    def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic, shared_dict: DictProxy, interval = 5):
+        self.device_info_static = device_info_static
         self.shared_dict = shared_dict
         self.interval = interval
         self.leader_ip = None
@@ -15,6 +16,8 @@ class heartbeat:
 
     def run(self):
         while True:
+            if self.device_info_static.MY_IP == self.leader_ip:
+                break
             self.get_device_info_update()
             if self.leader_ip is not None:
                 self.send_heartbeat_to_leader()
@@ -29,7 +32,7 @@ class heartbeat:
     def send_heartbeat_to_leader(self):
             bSend.send_unicast(ip=self.leader_ip, port=self.leader_port, message="heartbeat, something, senderIP: 192.168.178.70, senderID: something, hello there")
             print(f"Heartbeat sent to peer")
-            response = bSend.listen_to_unicast(3)
+            response = bSend.listen_to_unicast(timeout_seconds=3)
             if response == None:
                  print("Heartbeat timed out")
             else:

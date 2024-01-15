@@ -38,8 +38,8 @@ def start_folder_monitor(device_info_static: deviceInfo.DeviceInfoStatic, device
     p_monitor.start()
     return p_monitor
 
-def start_heartbeat(shared_dict: DictProxy, interval: int):
-    heartbeat = multiprocessing.Process(target=hb.heartbeat, args=(shared_dict, interval))
+def start_heartbeat(device_info_static, shared_dict: DictProxy, interval: int):
+    heartbeat = multiprocessing.Process(target=hb.heartbeat, args=(device_info_static, shared_dict, interval))
     heartbeat.start()
     return heartbeat
 
@@ -63,7 +63,7 @@ if __name__ == '__main__':
         p_bully = start_bully(device_info_static, device_info_dynamic, shared_queue, shared_dict)
         p_monitor = start_folder_monitor(device_info_static, device_info_dynamic, shared_queue, shared_dict)
 
-        heartbeat = start_heartbeat(shared_dict, interval = 5)
+        heartbeat = start_heartbeat(device_info_static, shared_dict, interval = 5)
 
         p_discovery.join()
 
