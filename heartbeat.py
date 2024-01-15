@@ -17,7 +17,7 @@ class heartbeat:
     def run(self):
         while True:
             if self.device_info_static.MY_IP == self.leader_ip:
-                break
+                self.receive_and_reply()
             self.get_device_info_update()
             if self.leader_ip is not None:
                 self.send_heartbeat_to_leader()
@@ -30,10 +30,19 @@ class heartbeat:
             self.leader_ip = self.device_info_dynamic.PEER_IP_DICT[leader_id]
 
     def send_heartbeat_to_leader(self):
-            bSend.send_unicast(ip=self.leader_ip, port=self.leader_port, message="heartbeat, something, senderIP: 192.168.178.70, senderID: something, hello there")
-            print(f"Heartbeat sent to peer")
-            response = bSend.listen_to_unicast(timeout_seconds=3)
+        bSend.send_unicast(ip=self.leader_ip, port=self.leader_port, message="heartbeat, something, senderIP: 192.168.178.70, senderID: something, hello there")
+        print(f"Heartbeat sent to peer")
+        response = bSend.listen_to_unicast(timeout_seconds=3)
+        if response == None:
+            print("Heartbeat timed out")
+        else:
+            print(response)
+
+    def receive_and_reply(self):
+        while True:
+            response = bSend.listen_to_unicast(timeout_seconds=100)
             if response == None:
-                 print("Heartbeat timed out")
+                print("Heartbeat timed out")
             else:
-                print(response)
+                # TODO: send back message to sender to acknowledge
+                bSend.send_unicast(ip=self.leader_ip, port=self.leader_port, message="heartbeat, something, senderIP: 192.168.178.70, senderID: something, hello there")
