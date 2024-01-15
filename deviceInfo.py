@@ -55,8 +55,7 @@ def get_broadcast_ip(device_ip, mask):
     return network_ip
 
 
-def lear_about_myself():
-
+def learn_about_myself():
     #my_peer_id = userIO.ask_for_unique_ID()
     my_peer_id = uuid.uuid1().int
     # my_storage = userIO.ask_for_folder_path_to_synchronise()

@@ -38,7 +38,10 @@ def start_folder_monitor(device_info_static: deviceInfo.DeviceInfoStatic, device
 
 
 if __name__ == '__main__':
-    device_info_static, device_info_dynamic = deviceInfo.lear_about_myself()
+    device_info_static, device_info_dynamic = deviceInfo.learn_about_myself()
+    
+    dynamic_manager = multiprocessing.Manager()
+    shared_dict = dynamic_manager.dict({'device_info_dynamic': device_info_dynamic, 'device_info_static': device_info_static})
 
     with multiprocessing.Manager() as dynamic_manager:
         shared_dict = dynamic_manager.dict({'device_info_dynamic': device_info_dynamic, 'device_info_static': device_info_static})
