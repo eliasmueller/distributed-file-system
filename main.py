@@ -39,7 +39,7 @@ def start_folder_monitor(device_info_static: deviceInfo.DeviceInfoStatic, device
     return p_monitor
 
 def start_heartbeat(device_info_static, shared_dict: DictProxy, interval: int):
-    heartbeat = multiprocessing.Process(target=hb.heartbeat, args=(device_info_static, shared_dict, interval))
+    heartbeat = multiprocessing.Process(target=hb.heartbeat, args=(device_info_static, shared_dict, interval), daemon=True)
     heartbeat.start()
     return heartbeat
 

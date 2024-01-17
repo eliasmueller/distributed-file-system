@@ -34,6 +34,7 @@ class heartbeat:
                 print("Heartbeat timed out")
                 # TODO Restart Bully Algorithm
             else:
+                print("Heartbeat answer received")
                 sender_ip = self.extract_sender_ip(response)
                 if sender_ip != self.leader_ip:
                     raise Exception("Received heartbeat response from non leader. This is not allowed") 
@@ -54,18 +55,14 @@ class heartbeat:
             if response == None:
                 print("Heartbeat timed out")
             else:
-                # TODO: send back message to sender to acknowledge
                  sender_ip = self.extract_sender_ip(response)
+                 print(f"Received heartbeat message from {sender_ip}. Sending Response...")
                  self.unicast_socket_sender.sendto(str.encode(f"heartbeat,{self.device_info_static.MY_IP}"), (sender_ip, self.heartbeat_port))
 
     def extract_sender_ip(self, message):
         message_split = message.split(',')
         sender_ip = message_split[1]
         return sender_ip
-
-    # def send_unicast(self, ip, port, message: str):
-    #     print("sending udp to ip:", ip, "port:", port)
-    #     self.unicast_socket_sender.sendto(str.encode(message), (ip, port))
 
     def wait_for_response(self, timeout_seconds: int):
         self.unicast_socket_sender.settimeout(timeout_seconds)

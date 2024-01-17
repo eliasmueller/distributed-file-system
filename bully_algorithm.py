@@ -144,9 +144,9 @@ class BullyAlgorithm(multiprocessing.Process):
     def update_device_info_dynamic(self, message: electionMessage.ElectionMessage):
         if message.SENDER_ID not in self.device_info_dynamic.PEERS:
             self.device_info_dynamic.PEERS.append(message.SENDER_ID)
-        self.device_info_dynamic.PEER_IP_DICT[message.SENDER_ID] = message.SENDER_IP
-        self.device_info_dynamic.LEADER_ID = self.leader_id
-        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+            self.device_info_dynamic.PEER_IP_DICT[message.SENDER_ID] = message.SENDER_IP
+            self.device_info_dynamic.LEADER_ID = self.leader_id
+            self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
 
     def handle_election_message(self, message: electionMessage.ElectionMessage):
         self.leader_id = None
@@ -182,11 +182,13 @@ class BullyAlgorithm(multiprocessing.Process):
                 self.received_higher_election_inquiry.append(message.SENDER_ID)
                 self.is_leader = False
                 self.leader_id = message.SENDER_ID
+                self.is_running = False
             else:
                 print("Received leader message from myself. Accepting me.")
                 self.is_leader = True
                 self.leader_id = self.peer_id
-            self.update_device_info_dynamic(message)
+                
+        self.update_device_info_dynamic(message)
 
 
 
