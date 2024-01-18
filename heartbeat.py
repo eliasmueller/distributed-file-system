@@ -110,8 +110,11 @@ class Heartbeat:
             for key, value in self.device_info_dynamic.PEER_IP_DICT.items():
                 if value == ip:
                     dead_id = key
+
         self.device_info_dynamic.PEERS.remove(dead_id)
         del self.device_info_dynamic.PEER_IP_DICT[dead_id]
+        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+
         message = message_formater.update_peer_view(self.device_info_static, self.device_info_dynamic)
         print(f"Removing dead peer {dead_id} from group.")
         broadcast_send.basic_broadcast(self.device_info_static.LAN_BROADCAST_IP,
