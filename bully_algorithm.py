@@ -194,43 +194,43 @@ class BullyAlgorithm(multiprocessing.Process):
 
 
 
-def establish_listeners(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: DictProxy):
-    listeners = []
-    p_broadcast_listen = bListen.BroadcastListener(device_info_static, device_info_dynamic, shared_queue, shared_dict)
-    listeners.append(p_broadcast_listen)
-    p_broadcast_listen.start()
-
-    return listeners
-
-
-def start_bully(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: DictProxy):
-    p_bully = multiprocessing.Process(target=BullyAlgorithm, args=(device_info_static, device_info_dynamic, shared_queue, shared_dict))
-    p_bully.daemon = True
-    p_bully.start()
-    return p_bully
-
-if __name__ == '__main__':
-    device_info_static, device_info_dynamic = deviceInfo.learn_about_myself()
-    
-    # dynamic_manager = multiprocessing.Manager()
-    # shared_dict = dynamic_manager.dict({'device_info_dynamic': device_info_dynamic, 'device_info_static': device_info_static})
-
-    with multiprocessing.Manager() as dynamic_manager:
-        shared_dict = dynamic_manager.dict({'device_info_dynamic': device_info_dynamic, 'device_info_static': device_info_static})
-
-        shared_queue = multiprocessing.Queue()
-
-        listeners = establish_listeners(device_info_static, device_info_dynamic, shared_queue, shared_dict)
-
-        p_discovery = multiprocessing.Process(target=discovery.discover_peers, args=(device_info_static, device_info_dynamic, shared_queue, shared_dict))
-        p_discovery.start()
-
-        p_bully = BullyAlgorithm(device_info_static, device_info_dynamic, shared_queue, shared_dict)
-
-        p_discovery.join()
-
-        device_info_dynamic = shared_dict.get("device_info_dynamic")
-        device_info_dynamic.print_info()
-
-        for listener in listeners:
-            listener.join()
+# def establish_listeners(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: DictProxy):
+#     listeners = []
+#     p_broadcast_listen = bListen.BroadcastListener(device_info_static, device_info_dynamic, shared_queue, shared_dict)
+#     listeners.append(p_broadcast_listen)
+#     p_broadcast_listen.start()
+#
+#     return listeners
+#
+#
+# def start_bully(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: DictProxy):
+#     p_bully = multiprocessing.Process(target=BullyAlgorithm, args=(device_info_static, device_info_dynamic, shared_queue, shared_dict))
+#     p_bully.daemon = True
+#     p_bully.start()
+#     return p_bully
+#
+# if __name__ == '__main__':
+#     device_info_static, device_info_dynamic = deviceInfo.learn_about_myself()
+#
+#     # dynamic_manager = multiprocessing.Manager()
+#     # shared_dict = dynamic_manager.dict({'device_info_dynamic': device_info_dynamic, 'device_info_static': device_info_static})
+#
+#     with multiprocessing.Manager() as dynamic_manager:
+#         shared_dict = dynamic_manager.dict({'device_info_dynamic': device_info_dynamic, 'device_info_static': device_info_static})
+#
+#         shared_queue = multiprocessing.Queue()
+#
+#         listeners = establish_listeners(device_info_static, device_info_dynamic, shared_queue, shared_dict)
+#
+#         p_discovery = multiprocessing.Process(target=discovery.discover_peers, args=(device_info_static, device_info_dynamic, shared_queue, shared_dict))
+#         p_discovery.start()
+#
+#         p_bully = BullyAlgorithm(device_info_static, device_info_dynamic, shared_queue, shared_dict)
+#
+#         p_discovery.join()
+#
+#         device_info_dynamic = shared_dict.get("device_info_dynamic")
+#         device_info_dynamic.print_info()
+#
+#         for listener in listeners:
+#             listener.join()
