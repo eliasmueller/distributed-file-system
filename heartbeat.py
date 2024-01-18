@@ -1,13 +1,11 @@
-import multiprocessing
 from multiprocessing.managers import DictProxy
 import time
-import threading
 import deviceInfo
-import sender as bSend
 import socket
 
-class heartbeat:
-    def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic, shared_dict: DictProxy, interval = 5):
+
+class Heartbeat:
+    def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic, shared_dict: DictProxy, interval=5):
         self.device_info_static = device_info_static
         self.shared_dict = shared_dict
         self.interval = interval
@@ -31,7 +29,7 @@ class heartbeat:
 
             self.send_heartbeat_to_leader()
             response = self.wait_for_response(timeout_seconds=3)
-            if response == None:
+            if response is None:
                 print("Heartbeat timed out")
                 heartbeat_timeout_counter += 1
                 if heartbeat_timeout_counter >= 2:
@@ -41,7 +39,7 @@ class heartbeat:
 
             else:
                 print("Heartbeat answer received")
-                sender_ip = self.extract_sender_ip(response)
+                sender_ip = extract_sender_ip(response)
                 if sender_ip != self.leader_ip:
                     raise Exception("Received heartbeat response from non leader. This is not allowed")
 
@@ -57,23 +55,20 @@ class heartbeat:
             self.leader_ip = self.device_info_dynamic.PEER_IP_DICT[leader_id]
 
     def send_heartbeat_to_leader(self):
-        self.unicast_socket_sender.sendto(str.encode(f"heartbeat,{self.device_info_static.MY_IP}"), (self.leader_ip, self.heartbeat_port))
+        self.unicast_socket_sender.sendto(str.encode(f"heartbeat,{self.device_info_static.MY_IP}"),
+                                          (self.leader_ip, self.heartbeat_port))
         print(f"Heartbeat sent to leader")
 
     def leader_receive_and_reply(self):
         while True:
             response = self.wait_for_response(timeout_seconds=100)
-            if response == None:
+            if response is None:
                 print("Heartbeat timed out")
             else:
-                 sender_ip = self.extract_sender_ip(response)
-                 print(f"Received heartbeat message from {sender_ip}. Sending Response...")
-                 self.unicast_socket_sender.sendto(str.encode(f"heartbeat,{self.device_info_static.MY_IP}"), (sender_ip, self.heartbeat_port))
-
-    def extract_sender_ip(self, message):
-        message_split = message.split(',')
-        sender_ip = message_split[1]
-        return sender_ip
+                sender_ip = extract_sender_ip(response)
+                print(f"Received heartbeat message from {sender_ip}. Sending Response...")
+                self.unicast_socket_sender.sendto(str.encode(f"heartbeat,{self.device_info_static.MY_IP}"),
+                                                  (sender_ip, self.heartbeat_port))
 
     def wait_for_response(self, timeout_seconds: int):
         self.unicast_socket_sender.settimeout(timeout_seconds)
@@ -84,3 +79,9 @@ class heartbeat:
                 return None
             if data:
                 return data.decode()
+
+
+def extract_sender_ip(message):
+    message_split = message.split(',')
+    sender_ip = message_split[1]
+    return sender_ip
