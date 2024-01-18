@@ -90,7 +90,7 @@ def response_extractor(message_specification: str, message_payload: str) -> str:
 
 
 def is_leader(message: str) -> bool:
-    return message.split(',')[0] == "election" and message.split(',')[1] == "leader"
+    return message.split(',')[0] == "election" and message.split(',')[1] == " leader"
 
 
 def is_response(message: str) -> bool:
