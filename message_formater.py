@@ -40,7 +40,7 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info
     elif message_type == 'response':
         return response_extractor(message_specification, message_payload)
     elif message_type == 'update':
-        device_info_dynamic.append_new_peer(message_sender_id, message_sender_ip)
+        device_info_dynamic.append_new_peer(int(message_sender_id), message_sender_ip)
         shared_dict.update(device_info_dynamic=device_info_dynamic)
         return 'ACK, update'
     elif message_type == 'election':
