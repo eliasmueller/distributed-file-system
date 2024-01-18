@@ -42,7 +42,7 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info
     message_specification = message_split[1]
     message_sender_ip = message_split[2].split(':')[1].strip()
     message_sender_id = message_split[3].split(':')[1].strip()
-    message_payload = message_split[4]
+    message_payload = message_split[4].split(':')[1].strip()
     if message_type == 'request':
         return request_answerer(device_info_static, device_info_dynamic, message_specification)
     elif message_type == 'response':
@@ -64,7 +64,7 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info
         print(f"Removing known peers as defined by leader. New group view: {device_info_dynamic.PEERS} ")
         shared_dict.update(device_info_dynamic=device_info_dynamic)
     elif message_type == 'election':
-        election_id = message_payload.split(':')[1].strip()
+        election_id = message_payload
         sender_id = int(message_sender_id)
         if device_info_static.PEER_ID != sender_id:
             election_extractor(message_specification, sender_id, election_id, message_sender_ip, shared_queue)
@@ -99,7 +99,7 @@ def request_answerer(device_info_static: deviceInfo.DeviceInfoStatic, device_inf
 def response_extractor(message_specification: str, message_payload: str) -> str:
     if message_specification == ' peer discovery':
         # returns the array of peers as a string
-        return message_payload.split(':')[1]
+        return message_payload
     # elif message_specification == 'ACK':
     #    pass
     else:
