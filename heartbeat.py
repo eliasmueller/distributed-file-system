@@ -19,6 +19,7 @@ class heartbeat:
         self.run()
 
     def run(self):
+        heartbeat_timeout_counter = 0
         while True:
             time.sleep(self.interval)
             self.get_device_info_update()
@@ -32,12 +33,22 @@ class heartbeat:
             response = self.wait_for_response(timeout_seconds=3)
             if response == None:
                 print("Heartbeat timed out")
-                # TODO Restart Bully Algorithm
+                heartbeat_timeout_counter += 1
+                if heartbeat_timeout_counter >= 2:
+                    print("Second timeout of heartbeat, starting new election.")
+                    heartbeat_timeout_counter = 0
+                    self.reset_leader_information()
+
             else:
                 print("Heartbeat answer received")
                 sender_ip = self.extract_sender_ip(response)
                 if sender_ip != self.leader_ip:
-                    raise Exception("Received heartbeat response from non leader. This is not allowed") 
+                    raise Exception("Received heartbeat response from non leader. This is not allowed")
+
+    def reset_leader_information(self):
+        self.leader_ip = None
+        self.device_info_dynamic.LEADER_ID = None
+        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
 
     def get_device_info_update(self):
         self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
