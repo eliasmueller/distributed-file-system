@@ -1,5 +1,8 @@
 # functions to abstract message syntax out of the code
+import ast
 import multiprocessing
+import pickle
+from typing import List
 
 import deviceInfo as deviceInfo
 import electionMessage as electionMessage
@@ -21,6 +24,10 @@ def update_peer_view(device_info_static: deviceInfo.DeviceInfoStatic,
     return f'update, peer view, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, senderView: {device_info_dynamic.PEERS}'
 
 
+def remove_peer_view(device_info_static: deviceInfo.DeviceInfoStatic, peersToBeRemoved: List[int]) -> str:
+    return f'remove, peer view, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, peersToBeRemoved: {peersToBeRemoved}'
+
+
 def get_election_message(device_info_static: deviceInfo.DeviceInfoStatic, message_type: str, election_id: str) -> str:
     return f'election, {message_type}, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, electionId: {election_id}'
 
@@ -28,7 +35,8 @@ def get_election_message(device_info_static: deviceInfo.DeviceInfoStatic, messag
 # answer extractor
 
 def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic,
-                    message: str, shared_queue: multiprocessing.Queue, shared_dict: multiprocessing.managers.DictProxy) -> str:
+                    message: str, shared_queue: multiprocessing.Queue,
+                    shared_dict: multiprocessing.managers.DictProxy) -> str:
     message_split = message.split(',')
     message_type = message_split[0]
     message_specification = message_split[1]
@@ -46,6 +54,15 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info
             print(f"Updating known peers: {device_info_dynamic.PEERS}")
             shared_dict.update(device_info_dynamic=device_info_dynamic)
         return 'ACK, update'
+    # this message type is used by the leader to notify the group about dead peers
+    elif message_type == 'remove':
+        peers = ast.literal_eval(message_payload)
+        dead_peers = peers
+        for dead_id in dead_peers:
+            device_info_dynamic.PEERS.remove(dead_id)
+            del device_info_dynamic.PEER_IP_DICT[dead_id]
+        print(f"Removing known peers as defined by leader. New group view: {device_info_dynamic.PEERS} ")
+        shared_dict.update(device_info_dynamic=device_info_dynamic)
     elif message_type == 'election':
         election_id = message_payload.split(':')[1].strip()
         sender_id = int(message_sender_id)

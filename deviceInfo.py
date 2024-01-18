@@ -1,8 +1,6 @@
 import socket
 import ipaddress
-import uuid
 
-import userIO
 
 
 class DeviceInfoStatic:

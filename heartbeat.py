@@ -105,18 +105,18 @@ class Heartbeat:
                 return data.decode()
 
     def remove_dead_peers(self, dead_peer_ips: List[str]):
-        dead_id = None
+        dead_ids = []
         for ip in dead_peer_ips:
             for key, value in self.device_info_dynamic.PEER_IP_DICT.items():
                 if value == ip:
-                    dead_id = key
-
-        self.device_info_dynamic.PEERS.remove(dead_id)
-        del self.device_info_dynamic.PEER_IP_DICT[dead_id]
+                    dead_ids.append(key)
+                    self.device_info_dynamic.PEERS.remove(key)
+                    del self.device_info_dynamic.PEER_IP_DICT[key]
+                    print(f"Removing dead peer {key} from group.")
         self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
 
-        message = message_formater.update_peer_view(self.device_info_static, self.device_info_dynamic)
-        print(f"Removing dead peer {dead_id} from group.")
+        message = message_formater.remove_peer_view(self.device_info_static, dead_ids)
+
         broadcast_send.basic_broadcast(self.device_info_static.LAN_BROADCAST_IP,
                                        self.device_info_static.LAN_BROADCAST_PORT, str(message))
 
