@@ -12,8 +12,7 @@ class Heartbeat:
         self.leader_ip = None
         self.heartbeat_port = 42044
         self.unicast_socket_sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        ip = socket.gethostbyname_ex(socket.gethostname())
-        self.unicast_socket_sender.bind((ip[2][len(ip[2])-1], 42044))
+        self.unicast_socket_sender.bind((device_info_static.MY_IP, 42044))
         self.buffer_size = 1024
         self.run()
 

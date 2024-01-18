@@ -1,5 +1,6 @@
 import socket
 import ipaddress
+from types import NoneType
 import uuid
 
 import userIO
@@ -13,11 +14,7 @@ class DeviceInfoStatic:
 
         # networking
         self.MY_HOST = socket.gethostname()
-        #self.MY_IP = socket.gethostbyname(self.MY_HOST)
-        #todo if the peer has more than one ip address find the right one
-        ip = socket.gethostbyname_ex(self.MY_HOST)
-        print(ip)
-        self.MY_IP = ip[2][len(ip[2])-1]
+        self.MY_IP = get_host_ip(self.MY_HOST)
         self.LAN_BROADCAST_IP = get_broadcast_ip(self.MY_IP, 24)
         self.LAN_BROADCAST_PORT = 5971
 
@@ -38,8 +35,6 @@ class DeviceInfoDynamic:
         self.IS_LEADER_IN_ONE_GROUP = False
         self.LEADER_ID: int | None = None
         self.PEER_vector_clock = dict() # TODO clean peer entries of ofline peers on heartbeat
-        for peer in self.PEERS:
-            self.PEER_vector_clock.update(peer, self.PEER_vector_clock.get(peer, 0))
 
     def print_info(self):
         print("Some dynamic information:")
@@ -52,20 +47,29 @@ class DeviceInfoDynamic:
         self.PEER_IP_DICT = new_peer_view
 
     def increase_vector_clock_entry(self, peer, increment_size: int):
-        self.PEER_vector_clock.update(peer, max(0, self.PEER_vector_clock.get(peer, 0), self.PEER_vector_clock.get(peer, 0) + increment_size))
+        peer_clock_val = 0
+        if peer in self.PEER_vector_clock:
+            peer_clock_val = self.PEER_vector_clock.get(peer)
 
+        self.PEER_vector_clock.update({peer : max(0, peer_clock_val, peer_clock_val + increment_size)})
+
+
+def get_host_ip(host_name):
+    #self.MY_IP = socket.gethostbyname(host_name)
+    #TODO if the peer has more than one ip address find the right one
+    ip = socket.gethostbyname_ex(host_name)
+    print(ip)
+    return ip[2][len(ip[2])-1]
 
 def get_network_ip(device_ip, mask):
     network = ipaddress.IPv4Network(f"{device_ip}/{mask}", strict=False)
     network_ip = str(network.network_address)
     return network_ip
 
-
 def get_broadcast_ip(device_ip, mask):
     network = ipaddress.IPv4Network(f"{device_ip}/{mask}", strict=False)
     network_ip = str(network.broadcast_address)
     return network_ip
-
 
 def learn_about_myself():
     my_peer_id = uuid.uuid1().int

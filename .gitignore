@@ -1,4 +1,7 @@
 .idea/
+#windows
+node/*
+*.bat
 # dotenv
 .env
 # virtualenv

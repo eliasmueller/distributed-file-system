@@ -50,7 +50,7 @@ class FolderMonitor:
 
     def consistent_ordered_multicast_file_change(self, f): 
         #increase own vector clock entry
-        self.device_info_dynamic.PEER_vector_clock.increase_vector_clock_entry(self.device_info_static.PEER_ID, 1)
+        self.device_info_dynamic.increase_vector_clock_entry(self.device_info_static.PEER_ID, 1)
         # TODO instead of (iterating over peers tcp) B multicast use (tcp) R multicast
         bSend.basic_multicast(self.device_info_static, self.device_info_dynamic, f)
 
@@ -59,7 +59,7 @@ class FolderMonitor:
         for f in files:
             if not f.startswith("."):  # Working files could often start with "." we do not want to send this.
                 print(f"sending {f}")
-                self.ordered_multicast_file_change(f)
+                self.consistent_ordered_multicast_file_change(f)
                 
     def update_from_queue(self):
         self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
