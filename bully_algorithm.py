@@ -90,7 +90,7 @@ class BullyAlgorithm(multiprocessing.Process):
     def wait_for_election_responses(self, peers_with_higher_peer_id: List[int]) -> str:
         now = datetime.datetime.now()
         if not peers_with_higher_peer_id:
-            timeout = now  # exit early if it is the highest peer
+            timeout = now + datetime.timedelta(seconds=3)  # exit early if it is the highest peer, not 0 to ensure "leader" message arrives after "answer"
         else:
             timeout = now + datetime.timedelta(seconds=15)
 
