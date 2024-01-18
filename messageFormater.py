@@ -25,6 +25,18 @@ def get_election_message(device_info_static: deviceInfo.DeviceInfoStatic, messag
     return f'election, {message_type}, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, electionId: {election_id}'
 
 
+def request_heartbeat_message(device_info_static: deviceInfo.DeviceInfoStatic) -> str:
+    return f'request, heartbeat, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}'
+
+
+def response_heartbeat_message(device_info_static: deviceInfo.DeviceInfoStatic) -> str:
+    return f'response, heartbeat, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}'
+
+
+def get_file_transfer_message(device_info_static: deviceInfo.DeviceInfoStatic, filename: str, vector_clock: dict) -> str:
+    return f'update, file transfer, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, <SEPARATOR>{filename}<SEPARATOR>{vector_clock}<SEPARATOR>'
+
+
 # answer extractor
 
 def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic,

@@ -1,7 +1,9 @@
 from multiprocessing.managers import DictProxy
 import time
-import deviceInfo
 import socket
+
+import deviceInfo
+import messageFormater as formater
 
 
 class Heartbeat:
@@ -39,7 +41,7 @@ class Heartbeat:
 
                 else:
                     print("Heartbeat answer received")
-                    sender_ip = extract_sender_ip(response)
+                    sender_ip = formater.get_sender_ip(response)
                     if sender_ip != self.leader_ip:
                         raise Exception("Received heartbeat response from non leader. This is not allowed")
 
@@ -57,7 +59,7 @@ class Heartbeat:
             self.leader_ip = None
 
     def send_heartbeat_to_leader(self):
-        self.unicast_socket_sender.sendto(str.encode(f"heartbeat,{self.device_info_static.MY_IP}"),
+        self.unicast_socket_sender.sendto(str.encode(formater.request_heartbeat_message(self.device_info_static)),
                                           (self.leader_ip, self.heartbeat_port))
         print(f"Heartbeat sent to leader")
 
@@ -72,9 +74,9 @@ class Heartbeat:
             if response is None:
                 continue
             else:
-                sender_ip = extract_sender_ip(response)
+                sender_ip = formater.get_sender_ip(response)
                 print(f"Received heartbeat message from {sender_ip}. Sending Response...")
-                self.unicast_socket_sender.sendto(str.encode(f"heartbeat,{self.device_info_static.MY_IP}"),
+                self.unicast_socket_sender.sendto(str.encode(formater.response_heartbeat_message(self.device_info_static)),
                                                   (sender_ip, self.heartbeat_port))
 
     def wait_for_response(self, timeout_seconds: int):
@@ -86,9 +88,3 @@ class Heartbeat:
                 return None
             if data:
                 return data.decode()
-
-
-def extract_sender_ip(message):
-    message_split = message.split(',')
-    sender_ip = message_split[1]
-    return sender_ip
