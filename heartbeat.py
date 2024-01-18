@@ -26,22 +26,22 @@ class Heartbeat:
                 continue
             elif self.device_info_static.MY_IP == self.leader_ip:
                 self.leader_receive_and_reply()
-
-            self.send_heartbeat_to_leader()
-            response = self.wait_for_response(timeout_seconds=3)
-            if response is None:
-                print("Heartbeat timed out")
-                heartbeat_timeout_counter += 1
-                if heartbeat_timeout_counter >= 2:
-                    print("Second timeout of heartbeat, starting new election.")
-                    heartbeat_timeout_counter = 0
-                    self.reset_leader_information()
-
             else:
-                print("Heartbeat answer received")
-                sender_ip = extract_sender_ip(response)
-                if sender_ip != self.leader_ip:
-                    raise Exception("Received heartbeat response from non leader. This is not allowed")
+                self.send_heartbeat_to_leader()
+                response = self.wait_for_response(timeout_seconds=3)
+                if response is None:
+                    print("Heartbeat timed out")
+                    heartbeat_timeout_counter += 1
+                    if heartbeat_timeout_counter >= 2:
+                        print("Second timeout of heartbeat, starting new election.")
+                        heartbeat_timeout_counter = 0
+                        self.reset_leader_information()
+
+                else:
+                    print("Heartbeat answer received")
+                    sender_ip = extract_sender_ip(response)
+                    if sender_ip != self.leader_ip:
+                        raise Exception("Received heartbeat response from non leader. This is not allowed")
 
     def reset_leader_information(self):
         self.leader_ip = None
@@ -53,6 +53,8 @@ class Heartbeat:
         leader_id = self.device_info_dynamic.LEADER_ID
         if leader_id is not None:
             self.leader_ip = self.device_info_dynamic.PEER_IP_DICT[leader_id]
+        else:
+            self.leader_ip = None
 
     def send_heartbeat_to_leader(self):
         self.unicast_socket_sender.sendto(str.encode(f"heartbeat,{self.device_info_static.MY_IP}"),
@@ -61,9 +63,14 @@ class Heartbeat:
 
     def leader_receive_and_reply(self):
         while True:
-            response = self.wait_for_response(timeout_seconds=100)
+            self.get_device_info_update()
+            if self.device_info_dynamic.LEADER_ID != self.device_info_static.PEER_ID:
+                print("Stopping working as a leader")
+                break
+
+            response = self.wait_for_response(timeout_seconds=3)
             if response is None:
-                print("Heartbeat timed out")
+                continue
             else:
                 sender_ip = extract_sender_ip(response)
                 print(f"Received heartbeat message from {sender_ip}. Sending Response...")
