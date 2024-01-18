@@ -87,6 +87,14 @@ def response_extractor(message_specification: str, message_payload: str) -> str:
     return ''  # empty answer no further investigation needed
 
 
+def is_leader(message: str) -> bool:
+    return message.split(':')[0] == "election" and message.split(':')[1] == "leader"
+
+
+def is_response(message: str) -> bool:
+    return message.split(':')[0] == "response"
+
+
 def get_sender_id(message: str) -> int:
     return int(message.split(',')[3].split(':')[1].strip())
 
