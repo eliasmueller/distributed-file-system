@@ -24,7 +24,7 @@ def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, device_info_
     bSend.basic_broadcast(device_info_static.LAN_BROADCAST_IP, device_info_static.LAN_BROADCAST_PORT, str(message))
     answers = []
     while True:
-        answer = bSend.listen_for_answer(1)
+        answer = bSend.listen_for_broadcast_answer(1)
         if answer is None:
             break
         answers.append(answer)

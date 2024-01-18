@@ -32,11 +32,13 @@ class DeviceInfoDynamic:
         self.PEER_IP_DICT = dict()
         self.GROUPS = []
         self.IS_LEADER_IN_ONE_GROUP = False
+        self.LEADER_ID: int | None = None
 
     def print_info(self):
         print("Some dynamic information:")
         print(f"known peers: {self.PEERS}")
         print(f"known groups: {self.GROUPS}\n")
+        print(f"leader: {self.LEADER_ID}\n")
 
     def update_peer_view(self, new_peer_view: dict):
         self.PEERS = [*new_peer_view]
@@ -55,8 +57,7 @@ def get_broadcast_ip(device_ip, mask):
     return network_ip
 
 
-def lear_about_myself():
-    #my_peer_id = userIO.ask_for_unique_ID()
+def learn_about_myself():
     my_peer_id = uuid.uuid1().int
     my_storage = userIO.ask_for_folder_path_to_synchronise()
     device_info_static = DeviceInfoStatic(my_peer_id, my_storage)

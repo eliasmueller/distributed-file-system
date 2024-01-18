@@ -1,13 +1,14 @@
+import platform
 import socket
-import deviceInfo as deviceInfo
 
-#self operating system
-#w = windows, m = mac OS, l = linux
-OPERATING_SYSTEM = "w"
+# self operating system
+# w = windows, m = mac OS, l = linux
+OPERATING_SYSTEM = platform.platform()
 
 broadcast_socket_sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-if OPERATING_SYSTEM != "w":
+if not OPERATING_SYSTEM.startswith("w"):
     broadcast_socket_sender.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
 buffer_size = 1024
 
 
@@ -17,7 +18,7 @@ def basic_broadcast(ip, port, message: str):
     # print(f"broadcasted {ip}, {port}: {message}")
 
 
-def listen_for_answer(timeout_seconds: int) -> str:
+def listen_for_broadcast_answer(timeout_seconds: int) -> str:
     broadcast_socket_sender.settimeout(timeout_seconds)
     while True:
         try:

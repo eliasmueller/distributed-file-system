@@ -7,8 +7,11 @@ import monitor_local_folder
 import util
 import discovery
 import deviceInfo as deviceInfo
+
 import broadcast_listener as bListen
 import file_tcp_listener as fListen
+
+import heartbeat as hb
 
 def establish_listeners(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: DictProxy):
     listeners = []
@@ -35,26 +38,34 @@ def start_folder_monitor(device_info_static: deviceInfo.DeviceInfoStatic, device
     p_monitor.start()
     return p_monitor
 
+def start_heartbeat(device_info_static, shared_dict: DictProxy, interval: int):
+    heartbeat = multiprocessing.Process(target=hb.heartbeat, args=(device_info_static, shared_dict, interval), daemon=True)
+    heartbeat.start()
+    return heartbeat
+
 
 if __name__ == '__main__':
-    device_info_static, device_info_dynamic = deviceInfo.lear_about_myself()
+    device_info_static, device_info_dynamic = deviceInfo.learn_about_myself()
 
-    with multiprocessing.Manager() as dynamic_manager:
-        shared_dict = dynamic_manager.dict({'device_info_dynamic': device_info_dynamic, 'device_info_static': device_info_static})
+    dynamic_manager = multiprocessing.Manager()
+    shared_dict = dynamic_manager.dict({'device_info_dynamic': device_info_dynamic, 'device_info_static': device_info_static})
 
-        shared_queue = multiprocessing.Queue()
+    shared_queue = multiprocessing.Queue()
 
-        listeners = establish_listeners(device_info_static, device_info_dynamic, shared_queue, shared_dict)
+    listeners = establish_listeners(device_info_static, device_info_dynamic, shared_queue, shared_dict)
 
-        p_discovery = multiprocessing.Process(target=discovery.discover_peers, args=(device_info_static, device_info_dynamic, shared_queue, shared_dict))
-        p_discovery.start()
+    p_discovery = multiprocessing.Process(target=discovery.discover_peers, args=(device_info_static, device_info_dynamic, shared_queue, shared_dict))
+    p_discovery.start()
 
-        p_bully = start_bully(device_info_static, device_info_dynamic, shared_queue, shared_dict)
-        p_monitor = start_folder_monitor(device_info_static, device_info_dynamic, shared_queue, shared_dict)
+    p_bully = start_bully(device_info_static, device_info_dynamic, shared_queue, shared_dict)
+    p_monitor = start_folder_monitor(device_info_static, device_info_dynamic, shared_queue, shared_dict)
 
-        p_discovery.join()
+    heartbeat = start_heartbeat(device_info_static, shared_dict, interval = 5)
 
-        shared_dict.get("device_info_dynamic").print_info()
+    p_discovery.join()
 
-        for listener in listeners:
-            listener.join()
+    device_info_dynamic = shared_dict.get("device_info_dynamic")
+    device_info_dynamic.print_info()
+
+    for listener in listeners:
+        listener.join()

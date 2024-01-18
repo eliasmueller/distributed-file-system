@@ -1,4 +1,5 @@
 import multiprocessing
+from multiprocessing.managers import DictProxy
 import datetime
 import time
 import uuid
@@ -10,9 +11,12 @@ import electionMessage
 import sender as bSend
 import util
 
+import broadcast_listener as bListen
+import discovery
+
 class BullyAlgorithm(multiprocessing.Process):
     def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic,
-                 device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: multiprocessing.managers.DictProxy):
+                 device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: DictProxy):
         super(BullyAlgorithm, self).__init__()
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
@@ -70,6 +74,8 @@ class BullyAlgorithm(multiprocessing.Process):
             self.is_leader = True
             self.send_election_leader()
             self.election_id = None
+            self.device_info_dynamic.LEADER_ID = self.leader_id
+            self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
 
         else:
             print(f"Process {self.peer_id} is aborting election {self.election_id}.")
@@ -136,13 +142,13 @@ class BullyAlgorithm(multiprocessing.Process):
 
     # TODO clarify with @SimonNass if this is in order
     def update_device_info_dynamic(self, message: electionMessage.ElectionMessage):
-        if not self.device_info_dynamic.PEERS.__contains__(message.SENDER_ID):
+        if message.SENDER_ID not in self.device_info_dynamic.PEERS:
             self.device_info_dynamic.PEERS.append(message.SENDER_ID)
             self.device_info_dynamic.PEER_IP_DICT[message.SENDER_ID] = message.SENDER_IP
+            self.device_info_dynamic.LEADER_ID = self.leader_id
             self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
 
     def handle_election_message(self, message: electionMessage.ElectionMessage):
-        self.update_device_info_dynamic(message)
         self.leader_id = None
         self.is_leader = False
         # this is always from a lower process:
@@ -171,8 +177,60 @@ class BullyAlgorithm(multiprocessing.Process):
                     self.received_lower_election_inquiry.append(message.SENDER_ID)
                 else:
                     print(f"Process {self.peer_id} received leader from lower process {message.SENDER_ID}. Starting new election.")
-            else:
+            elif message.SENDER_ID > self.peer_id:
                 print(f"Process {self.peer_id} received leader message from higher process {message.SENDER_ID}. Accepting him.")
                 self.received_higher_election_inquiry.append(message.SENDER_ID)
                 self.is_leader = False
                 self.leader_id = message.SENDER_ID
+                self.is_running = False
+            else:
+                print("Received leader message from myself. Accepting me.")
+                self.is_leader = True
+                self.leader_id = self.peer_id
+                
+        self.update_device_info_dynamic(message)
+
+
+
+
+
+# def establish_listeners(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: DictProxy):
+#     listeners = []
+#     p_broadcast_listen = bListen.BroadcastListener(device_info_static, device_info_dynamic, shared_queue, shared_dict)
+#     listeners.append(p_broadcast_listen)
+#     p_broadcast_listen.start()
+#
+#     return listeners
+#
+#
+# def start_bully(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: DictProxy):
+#     p_bully = multiprocessing.Process(target=BullyAlgorithm, args=(device_info_static, device_info_dynamic, shared_queue, shared_dict))
+#     p_bully.daemon = True
+#     p_bully.start()
+#     return p_bully
+#
+# if __name__ == '__main__':
+#     device_info_static, device_info_dynamic = deviceInfo.learn_about_myself()
+#
+#     # dynamic_manager = multiprocessing.Manager()
+#     # shared_dict = dynamic_manager.dict({'device_info_dynamic': device_info_dynamic, 'device_info_static': device_info_static})
+#
+#     with multiprocessing.Manager() as dynamic_manager:
+#         shared_dict = dynamic_manager.dict({'device_info_dynamic': device_info_dynamic, 'device_info_static': device_info_static})
+#
+#         shared_queue = multiprocessing.Queue()
+#
+#         listeners = establish_listeners(device_info_static, device_info_dynamic, shared_queue, shared_dict)
+#
+#         p_discovery = multiprocessing.Process(target=discovery.discover_peers, args=(device_info_static, device_info_dynamic, shared_queue, shared_dict))
+#         p_discovery.start()
+#
+#         p_bully = BullyAlgorithm(device_info_static, device_info_dynamic, shared_queue, shared_dict)
+#
+#         p_discovery.join()
+#
+#         device_info_dynamic = shared_dict.get("device_info_dynamic")
+#         device_info_dynamic.print_info()
+#
+#         for listener in listeners:
+#             listener.join()
