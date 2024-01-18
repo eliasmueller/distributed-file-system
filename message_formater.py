@@ -56,13 +56,14 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info
         return 'ACK, update'
     # this message type is used by the leader to notify the group about dead peers
     elif message_type == 'remove':
-        peers = ast.literal_eval(message_payload)
-        dead_peers = peers
-        for dead_id in dead_peers:
-            device_info_dynamic.PEERS.remove(dead_id)
-            del device_info_dynamic.PEER_IP_DICT[dead_id]
-        print(f"Removing known peers as defined by leader. New group view: {device_info_dynamic.PEERS} ")
-        shared_dict.update(device_info_dynamic=device_info_dynamic)
+        if device_info_dynamic.LEADER_ID != device_info_static.PEER_ID:
+            peers = ast.literal_eval(message_payload)
+            dead_peers = peers
+            for dead_id in dead_peers:
+                device_info_dynamic.PEERS.remove(dead_id)
+                del device_info_dynamic.PEER_IP_DICT[dead_id]
+            print(f"Removing known peers as defined by leader. New group view: {device_info_dynamic.PEERS} ")
+            shared_dict.update(device_info_dynamic=device_info_dynamic)
     elif message_type == 'election':
         election_id = message_payload
         sender_id = int(message_sender_id)
