@@ -43,6 +43,7 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info
         peer_id = int(message_sender_id)
         if peer_id not in device_info_dynamic.PEERS:
             device_info_dynamic.append_new_peer(peer_id, message_sender_ip)
+            print(f"Updating known peers: {device_info_dynamic.PEERS}")
             shared_dict.update(device_info_dynamic=device_info_dynamic)
         return 'ACK, update'
     elif message_type == 'election':
