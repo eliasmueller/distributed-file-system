@@ -1,7 +1,7 @@
 import socket
 import multiprocessing
 
-import messageFormater as formater
+import message_formater as formater
 import deviceInfo as deviceInfo
 
 buffer_size = 1024

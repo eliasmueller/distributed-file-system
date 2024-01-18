@@ -5,7 +5,7 @@ from typing import List
 import util
 import deviceInfo as deviceInfo
 import sender as bSend
-import messageFormater as formater
+import message_formater as formater
 
 def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic,
                    shared_queue: multiprocessing.Queue, shared_dict: multiprocessing.managers.DictProxy):
