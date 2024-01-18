@@ -40,10 +40,10 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info
     elif message_type == 'response':
         return response_extractor(message_specification, message_payload)
     elif message_type == 'update':
-        #peer_id = int(message_sender_id)
-        #if peer_id not in device_info_dynamic.PEERS:
-            #device_info_dynamic.append_new_peer(peer_id, message_sender_ip)
-            #shared_dict.update(device_info_dynamic=device_info_dynamic)
+        peer_id = int(message_sender_id)
+        if peer_id not in device_info_dynamic.PEERS:
+            device_info_dynamic.append_new_peer(peer_id, message_sender_ip)
+            shared_dict.update(device_info_dynamic=device_info_dynamic)
         return 'ACK, update'
     elif message_type == 'election':
         election_id = message_payload.split(':')[1].strip()
@@ -90,11 +90,11 @@ def response_extractor(message_specification: str, message_payload: str) -> str:
 
 
 def is_leader(message: str) -> bool:
-    return message.split(':')[0] == "election" and message.split(':')[1] == "leader"
+    return message.split(',')[0] == "election" and message.split(',')[1] == "leader"
 
 
 def is_response(message: str) -> bool:
-    return message.split(':')[0] == "response"
+    return message.split(',')[0] == "response"
 
 
 def get_sender_id(message: str) -> int:

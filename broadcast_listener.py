@@ -38,7 +38,7 @@ class BroadcastListener(multiprocessing.Process):
     def listen(self):
         # recvfrom is waiting until it receives something and can not be exited with KeyboardInterrupt
         while self.isRunning:
-            #self.device_info_dynamic = self.shared_dict["device_info_dynamic"]
+            self.device_info_dynamic = self.shared_dict["device_info_dynamic"]
             try:
                 data, addr = self.listen_socket.recvfrom(self.buffer_size)
                 if data:
@@ -46,9 +46,9 @@ class BroadcastListener(multiprocessing.Process):
                     answer = formater.process_message(self.device_info_static, self.device_info_dynamic, data.decode(), self.shared_queue, self.shared_dict)
                     if answer:
                         self.answer(addr, answer)
-                    #if self.device_info_dynamic.LEADER_ID == self.device_info_static.PEER_ID:
+                    if self.device_info_dynamic.LEADER_ID == self.device_info_static.PEER_ID:
                         # if this peer is the leader let the new one know already
-                        #self.answer(addr, formater.get_election_message(self.device_info_static, "leader", "init-no-election-id"))
+                        self.answer(addr, formater.get_election_message(self.device_info_static, "leader", "init-no-election-id"))
             except KeyboardInterrupt:
                 # TODO dose not work yet
                 self.isRunning = False
