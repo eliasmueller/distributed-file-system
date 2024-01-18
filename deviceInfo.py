@@ -1,6 +1,8 @@
 import socket
 import ipaddress
+import uuid
 
+import userIO
 
 
 class DeviceInfoStatic:
@@ -60,8 +62,8 @@ def get_broadcast_ip(device_ip, mask):
 
 
 def learn_about_myself():
-    my_peer_id = 456  # uuid.uuid1().int
-    my_storage = "/Users/p371728/sync-test"  # userIO.ask_for_folder_path_to_synchronise()
+    my_peer_id = uuid.uuid1().int
+    my_storage = userIO.ask_for_folder_path_to_synchronise()
     device_info_static = DeviceInfoStatic(my_peer_id, my_storage)
     device_info_dynamic = DeviceInfoDynamic(my_peer_id, device_info_static.MY_IP)
     device_info_static.print_info()
