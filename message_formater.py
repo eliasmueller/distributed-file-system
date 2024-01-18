@@ -28,7 +28,7 @@ def get_election_message(device_info_static: deviceInfo.DeviceInfoStatic, messag
 # answer extractor
 
 def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic,
-                    message: str, shared_queue: multiprocessing.Queue) -> str:
+                    message: str, shared_queue: multiprocessing.Queue, shared_dict: multiprocessing.managers.DictProxy) -> str:
     message_split = message.split(',')
     message_type = message_split[0]
     message_specification = message_split[1]
@@ -40,6 +40,8 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info
     elif message_type == 'response':
         return response_extractor(message_specification, message_payload)
     elif message_type == 'update':
+        device_info_dynamic.append_new_peer(message_sender_id, message_sender_ip)
+        shared_dict.update(device_info_dynamic=device_info_dynamic)
         return 'ACK, update'
     elif message_type == 'election':
         election_id = message_payload.split(':')[1].strip()

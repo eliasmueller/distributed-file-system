@@ -44,6 +44,10 @@ class DeviceInfoDynamic:
         self.PEERS = [*new_peer_view]
         self.PEER_IP_DICT = new_peer_view
 
+    def append_new_peer(self, new_peer_id: id, new_peer_ip: str):
+        self.PEERS.append(new_peer_id)
+        self.PEER_IP_DICT[new_peer_ip] = new_peer_ip
+
 
 def get_network_ip(device_ip, mask):
     network = ipaddress.IPv4Network(f"{device_ip}/{mask}", strict=False)
