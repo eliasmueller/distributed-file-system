@@ -9,17 +9,8 @@ import messageFormater as formater
 
 def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic,
                    shared_queue: multiprocessing.Queue, shared_dict: multiprocessing.managers.DictProxy):
-    # Send broadcast message
-    # message = device_info.MY_IP + ' sent a broadcast message'
-    # p_send = multiprocessing.Process(target=bSend.broadcast, args=(device_info.LAN_BOADCAST_IP, device_info.LAN_BROADCAST_PORT, message))
-    # p_send_leader = multiprocessing.Process(target=bSend.discover_leaders, args=(device_info))
-    # p_send_peer = multiprocessing.Process(target=bSend.discover_peers, args=(device_info))
-    # p_send_leader.start()
-    # p_send_peer.start()
-    # p_send_leader.join()
-    # p_send_peer.join()
-
     # discover peers
+    print("start a discovery")
     message = formater.request_discovery(device_info_static, device_info_dynamic)
     bSend.basic_broadcast(device_info_static.LAN_BROADCAST_IP, device_info_static.LAN_BROADCAST_PORT, str(message))
     answers = []

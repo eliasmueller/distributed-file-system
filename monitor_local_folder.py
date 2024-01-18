@@ -4,6 +4,7 @@ import time
 
 import deviceInfo
 import file_transfer
+import sender as bSend
 
 class FolderMonitor:
     def __init__(self,
@@ -47,17 +48,18 @@ class FolderMonitor:
         except KeyboardInterrupt:
             pass
 
-    # TODO this must be secured by ordered reliable multicast, maybe in another file
+    def consistent_ordered_multicast_file_change(self, f): 
+        #increase own vector clock entry
+        self.device_info_dynamic.PEER_vector_clock.increase_vector_clock_entry(self.device_info_static.PEER_ID, 1)
+        # TODO instead of (iterating over peers tcp) B multicast use (tcp) R multicast
+        bSend.basic_multicast(self.device_info_static, self.device_info_dynamic, f)
+
     def notify_all_peers_about_file_change(self, files):
         print(f"Change detected, {files}")
         for f in files:
             if not f.startswith("."):  # Working files could often start with "." we do not want to send this.
                 print(f"sending {f}")
-                for p in self.device_info_dynamic.PEERS:
-                    if p != self.device_info_static.PEER_ID:
-                        ip = self.device_info_dynamic.PEER_IP_DICT[p]
-                        file_transfer.transfer_file(ip=ip, port=7771, device_info_static=self.device_info_static,
-                                                    filename=f)
-
+                self.ordered_multicast_file_change(f)
+                
     def update_from_queue(self):
         self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")

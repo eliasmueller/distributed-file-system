@@ -13,7 +13,11 @@ class DeviceInfoStatic:
 
         # networking
         self.MY_HOST = socket.gethostname()
-        self.MY_IP = socket.gethostbyname(self.MY_HOST)
+        #self.MY_IP = socket.gethostbyname(self.MY_HOST)
+        #todo if the peer has more than one ip address find the right one
+        ip = socket.gethostbyname_ex(self.MY_HOST)
+        print(ip)
+        self.MY_IP = ip[2][len(ip[2])-1]
         self.LAN_BROADCAST_IP = get_broadcast_ip(self.MY_IP, 24)
         self.LAN_BROADCAST_PORT = 5971
 
@@ -33,6 +37,9 @@ class DeviceInfoDynamic:
         self.GROUPS = []
         self.IS_LEADER_IN_ONE_GROUP = False
         self.LEADER_ID: int | None = None
+        self.PEER_vector_clock = dict() # TODO clean peer entries of ofline peers on heartbeat
+        for peer in self.PEERS:
+            self.PEER_vector_clock.update(peer, self.PEER_vector_clock.get(peer, 0))
 
     def print_info(self):
         print("Some dynamic information:")
@@ -43,6 +50,9 @@ class DeviceInfoDynamic:
     def update_peer_view(self, new_peer_view: dict):
         self.PEERS = [*new_peer_view]
         self.PEER_IP_DICT = new_peer_view
+
+    def increase_vector_clock_entry(self, peer, increment_size: int):
+        self.PEER_vector_clock.update(peer, max(0, self.PEER_vector_clock.get(peer, 0), self.PEER_vector_clock.get(peer, 0) + increment_size))
 
 
 def get_network_ip(device_ip, mask):
