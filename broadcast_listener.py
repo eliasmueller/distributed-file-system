@@ -1,7 +1,7 @@
 import socket
 import multiprocessing
 
-import messageFormater as formater
+import message_formater as formater
 import deviceInfo as deviceInfo
 
 buffer_size = 1024
@@ -31,20 +31,24 @@ class BroadcastListener(multiprocessing.Process):
     def run(self):
         print("Listening to broadcast messages")
         try:
-            self.listen(self.device_info_static, self.device_info_dynamic)
+            self.listen()
         finally:
             self.listen_socket.close()
 
-    def listen(self, device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic):
+    def listen(self):
         # recvfrom is waiting until it receives something and can not be exited with KeyboardInterrupt
         while self.isRunning:
+            self.device_info_dynamic = self.shared_dict["device_info_dynamic"]
             try:
                 data, addr = self.listen_socket.recvfrom(self.buffer_size)
                 if data:
                     #print(f"Received broadcast from {addr} with the message: {data.decode()}")
-                    answer = formater.process_message(device_info_static, device_info_dynamic, data.decode(), self.shared_queue)
+                    answer = formater.process_message(self.device_info_static, self.device_info_dynamic, data.decode(), self.shared_queue, self.shared_dict)
                     if answer:
                         self.answer(addr, answer)
+                    if self.device_info_dynamic.LEADER_ID == self.device_info_static.PEER_ID:
+                        # if this peer is the leader let the new one know already
+                        self.answer(addr, formater.get_election_message(self.device_info_static, "leader", "init-no-election-id"))
             except KeyboardInterrupt:
                 # TODO dose not work yet
                 self.isRunning = False

@@ -5,7 +5,7 @@ import time
 import uuid
 from typing import List
 
-import messageFormater as formater
+import message_formater as formater
 import deviceInfo
 import electionMessage
 import sender as bSend
@@ -34,8 +34,7 @@ class BullyAlgorithm(multiprocessing.Process):
 
     def update_dynamic_info(self):
         self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
-        if not self.device_info_dynamic.LEADER_ID:
-            self.leader_id = None
+        self.leader_id = self.device_info_dynamic.LEADER_ID
         if not self.shared_queue.empty():
             queue_message = util.consume(self.shared_queue)
             self.handle_election_message(queue_message)
@@ -91,7 +90,7 @@ class BullyAlgorithm(multiprocessing.Process):
     def wait_for_election_responses(self, peers_with_higher_peer_id: List[int]) -> str:
         now = datetime.datetime.now()
         if not peers_with_higher_peer_id:
-            timeout = now  # exit early if it is the highest peer
+            timeout = now + datetime.timedelta(seconds=3)  # exit early if it is the highest peer, not 0 to ensure "leader" message arrives after "answer"
         else:
             timeout = now + datetime.timedelta(seconds=15)
 

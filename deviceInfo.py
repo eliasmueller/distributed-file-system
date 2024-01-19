@@ -27,10 +27,10 @@ class DeviceInfoStatic:
 
 
 class DeviceInfoDynamic:
-    def __init__(self, my_peer_ID: int):
+    def __init__(self, my_peer_ID: int, my_peer_IP):
         # global view
         self.PEERS = [my_peer_ID]
-        self.PEER_IP_DICT = dict()
+        self.PEER_IP_DICT = {my_peer_ID: my_peer_IP}
         self.GROUPS = []
         self.IS_LEADER_IN_ONE_GROUP = False
         self.LEADER_ID: int | None = None
@@ -53,13 +53,15 @@ class DeviceInfoDynamic:
 
         self.PEER_vector_clock.update({peer : max(0, peer_clock_val, peer_clock_val + increment_size)})
 
-
 def get_host_ip(host_name):
     #self.MY_IP = socket.gethostbyname(host_name)
     #TODO if the peer has more than one ip address find the right one
     ip = socket.gethostbyname_ex(host_name)
     print(ip)
     return ip[2][len(ip[2])-1]
+    def append_new_peer(self, new_peer_id: int, new_peer_ip: str):
+        self.PEERS.append(new_peer_id)
+        self.PEER_IP_DICT[new_peer_id] = new_peer_ip
 
 def get_network_ip(device_ip, mask):
     network = ipaddress.IPv4Network(f"{device_ip}/{mask}", strict=False)
@@ -75,7 +77,7 @@ def learn_about_myself():
     my_peer_id = uuid.uuid1().int
     my_storage = userIO.ask_for_folder_path_to_synchronise()
     device_info_static = DeviceInfoStatic(my_peer_id, my_storage)
-    device_info_dynamic = DeviceInfoDynamic(my_peer_id)
+    device_info_dynamic = DeviceInfoDynamic(my_peer_id, device_info_static.MY_IP)
     device_info_static.print_info()
     device_info_dynamic.print_info()
     return device_info_static, device_info_dynamic
