@@ -53,15 +53,16 @@ class DeviceInfoDynamic:
 
         self.PEER_vector_clock.update({peer : max(0, peer_clock_val, peer_clock_val + increment_size)})
 
+    def append_new_peer(self, new_peer_id: int, new_peer_ip: str):
+        self.PEERS.append(new_peer_id)
+        self.PEER_IP_DICT[new_peer_id] = new_peer_ip
+
 def get_host_ip(host_name):
     #self.MY_IP = socket.gethostbyname(host_name)
     #TODO if the peer has more than one ip address find the right one
     ip = socket.gethostbyname_ex(host_name)
     print(ip)
     return ip[2][len(ip[2])-1]
-    def append_new_peer(self, new_peer_id: int, new_peer_ip: str):
-        self.PEERS.append(new_peer_id)
-        self.PEER_IP_DICT[new_peer_id] = new_peer_ip
 
 def get_network_ip(device_ip, mask):
     network = ipaddress.IPv4Network(f"{device_ip}/{mask}", strict=False)

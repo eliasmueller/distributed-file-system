@@ -2,14 +2,12 @@ from datetime import datetime
 from multiprocessing.managers import DictProxy
 import time
 from typing import List
+import socket
 
 import message_formater
 import sender as broadcast_send
 import deviceInfo
-import socket
-
-import deviceInfo
-import messageFormater as formater
+import message_formater as formater
 
 
 class Heartbeat:

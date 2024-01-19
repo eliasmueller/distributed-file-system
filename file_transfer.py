@@ -2,7 +2,7 @@ import socket
 import ast
 
 import deviceInfo
-import messageFormater as formater
+import message_formater as formater
 
 buffer_size = 4096
 
