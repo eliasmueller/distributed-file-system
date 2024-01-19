@@ -2,8 +2,10 @@ import socket
 import ipaddress
 from types import NoneType
 import uuid
+import os
 
 import userIO
+import util
 
 
 class DeviceInfoStatic:
@@ -34,6 +36,7 @@ class DeviceInfoDynamic:
         self.GROUPS = []
         self.IS_LEADER_IN_ONE_GROUP = False
         self.LEADER_ID: int | None = None
+        self.PEER_file_state = {}
         self.PEER_vector_clock = dict() # TODO clean peer entries of ofline peers on heartbeat
 
     def print_info(self):
@@ -47,10 +50,7 @@ class DeviceInfoDynamic:
         self.PEER_IP_DICT = new_peer_view
 
     def increase_vector_clock_entry(self, peer, increment_size: int):
-        peer_clock_val = 0
-        if peer in self.PEER_vector_clock:
-            peer_clock_val = self.PEER_vector_clock.get(peer)
-
+        peer_clock_val = util.get_or_default(self.PEER_vector_clock, peer)
         self.PEER_vector_clock.update({peer : max(0, peer_clock_val, peer_clock_val + increment_size)})
 
     def append_new_peer(self, new_peer_id: int, new_peer_ip: str):
@@ -77,6 +77,15 @@ def get_broadcast_ip(device_ip, mask):
 def learn_about_myself():
     my_peer_id = uuid.uuid1().int
     my_storage = userIO.ask_for_folder_path_to_synchronise()
+    device_info_static = DeviceInfoStatic(my_peer_id, my_storage)
+    device_info_dynamic = DeviceInfoDynamic(my_peer_id, device_info_static.MY_IP)
+    device_info_static.print_info()
+    device_info_dynamic.print_info()
+    return device_info_static, device_info_dynamic
+
+def learn_about_myself(uuid: int, path: str):
+    my_peer_id = uuid
+    my_storage = path
     device_info_static = DeviceInfoStatic(my_peer_id, my_storage)
     device_info_dynamic = DeviceInfoDynamic(my_peer_id, device_info_static.MY_IP)
     device_info_static.print_info()

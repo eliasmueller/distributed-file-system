@@ -15,3 +15,10 @@ def consume(shared_queue: multiprocessing.Queue):
 def produce_election_message(shared_queue: multiprocessing.Queue, election_message: electionMessage.ElectionMessage):
     serialized_object = pickle.dumps(election_message)
     shared_queue.put(serialized_object)
+
+
+def get_or_default(dictionary: dict() , key) -> int:
+    value = 0
+    if key in dictionary:
+        value = dictionary.get(key)
+    return value

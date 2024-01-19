@@ -40,8 +40,8 @@ def response_heartbeat_message(device_info_static: deviceInfo.DeviceInfoStatic) 
     return f'response, heartbeat, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}'
 
 
-def get_file_transfer_message(device_info_static: deviceInfo.DeviceInfoStatic, filename: str, vector_clock: dict) -> str:
-    return f'update, file transfer, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, <SEPARATOR>{filename}<SEPARATOR>{vector_clock}<SEPARATOR>'
+def get_file_transfer_message(device_info_static: deviceInfo.DeviceInfoStatic, message_type: str, filename: str, vector_clock: dict) -> str:
+    return f'update, file transfer {message_type}, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, <SEPARATOR>{filename}<SEPARATOR>{vector_clock}<SEPARATOR>'
 
 
 # answer extractor
@@ -119,6 +119,9 @@ def response_extractor(message_specification: str, message_payload: str) -> str:
         pass
     return ''  # empty answer no further investigation needed
 
+
+def get_message_type(message: str) -> bool:
+    return message.split(',')[1]
 
 def is_leader(message: str) -> bool:
     return message.split(',')[0] == "election" and message.split(',')[1] == " leader"
