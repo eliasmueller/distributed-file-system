@@ -19,7 +19,7 @@ def transfer_file(ip, port, device_info_static: deviceInfo.DeviceInfoStatic, mes
     tcp_socket_sender.send(str.encode(formater.get_file_transfer_message(device_info_static,message_type,filename,vector_clock)))
     print(f"Send file {filename} to {ip}.")
 
-    if message_type == "delete":
+    if message_type == " file transfer delete":
         tcp_socket_sender.close()
         return
     
@@ -34,41 +34,38 @@ def transfer_file(ip, port, device_info_static: deviceInfo.DeviceInfoStatic, mes
     tcp_socket_sender.close()
 
 
-def listen_for_file(conn_socket, device_info_static: deviceInfo.DeviceInfoStatic):
+def listen_for_file(listen_socket, device_info_static: deviceInfo.DeviceInfoStatic) -> (str, dict, str, int, str):
+    listen_socket.listen()
+    conn_socket, addr = listen_socket.accept()
+    print(f"Received tcp connection handshake from {addr}")
     received = conn_socket.recv(buffer_size).decode().split("<SEPARATOR>")
 
     filename = received[1]
     vector_clock = ast.literal_eval(received[2])
 
-    print(f"Receiving message with file {filename} and vector clock {vector_clock}.")
     message_type = formater.get_message_type(received[0])
+    print(f"Receiving message with {message_type} file {filename} and vector clock {vector_clock}.")
     temp_filename = f"tempversion_{filename}"
 
-    if message_type == "delete":
+    if message_type == " file transfer delete":
         conn_socket.close()
-        return filename, vector_clock, temp_filename, formater.get_sender_id(received[0])
+        return filename, vector_clock, temp_filename, formater.get_sender_id(received[0]), message_type
 
     filepath = f"{device_info_static.MY_STORAGE}/{temp_filename}"
     
-    with open(filepath, "w+") as f:
-        print("tempfile")
+    #make sure that the temp file exists + write beginning of file
+    with open(filepath, "w") as f:
+        if received[3] != "":  # possibly already the beginning of the file
+            f.write(received[3])
+            #TODO dose not work in some unknown specific cases 
 
     with open(filepath, "wb") as f:
-        print("---------------------------------a")
-        if received[3] != "":  # possibly already the beginning of the file
-            print("---------------------------------b")
-            f.write(received[3]) # TODO this is not working properly yet
         while True:
-            print("---------------------------------c")
             bytes_read = conn_socket.recv(buffer_size)
-            print("---------------------------------d")
             if not bytes_read:
-                print("---------------------------------e")
                 break
-            print("---------------------------------f")
             f.write(bytes_read)
-            print("---------------------------------g")
     conn_socket.close()
-    print("b-deliver")
-    return filename, vector_clock, temp_filename, formater.get_sender_id(received[0])
+    #b-deliver
+    return filename, vector_clock, temp_filename, formater.get_sender_id(received[0]), message_type
 
