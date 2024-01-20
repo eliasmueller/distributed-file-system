@@ -6,6 +6,7 @@ import util
 import deviceInfo as deviceInfo
 import sender as bSend
 import message_formater as formater
+import util
 
 def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic,
                    shared_queue: multiprocessing.Queue, shared_dict: multiprocessing.managers.DictProxy):
@@ -22,8 +23,9 @@ def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, device_info_
         # print(f"recieved answer {answer}")
 
     # update group view
-    new_peer_view, leader_id = interpret_discovery_answers(device_info_static, answers)
+    new_peer_view, leader_id, new_vector_clock = interpret_discovery_answers(device_info_static, answers)
     device_info_dynamic.update_peer_view(new_peer_view)
+    device_info_dynamic.update_vector_clock(new_vector_clock)
     if leader_id:
         device_info_dynamic.LEADER_ID = leader_id
 
@@ -36,15 +38,19 @@ def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, device_info_
 def interpret_discovery_answers(device_info_static: deviceInfo.DeviceInfoStatic, answers: List[str]):
     # TODO resolve if not all answers are similar
     new_peer_view = {}
+    new_vector_clock = dict()
     leader_id = None
     for answer in answers:
+        sender_id = formater.get_sender_id(answer)
         if formater.is_leader(answer):
-            leader_id = formater.get_sender_id(answer)
+            leader_id = sender_id
         elif formater.is_response(answer):
-            new_peer_view[formater.get_sender_id(answer)] = formater.get_sender_ip(answer)
+            new_peer_view[sender_id] = formater.get_sender_ip(answer)
             # answer_peer_view = formater.process_message()
             # new_peer_view = ast.literal_eval(answer_peer_view)
+        new_vector_clock.update({sender_id : util.get_or_default(formater.get_sender_vector_clock(answer), sender_id)})
+        #TODO if other peers know the uuid of this peer with a vector clock > 0 we runn in a loop > discovery message resets vector clock of new id?
     if device_info_static.PEER_ID not in new_peer_view:
         # TODO if two times in list then network duplicates or ID already used
         new_peer_view[device_info_static.PEER_ID] = device_info_static.MY_IP
-    return new_peer_view, leader_id
+    return new_peer_view, leader_id, new_vector_clock

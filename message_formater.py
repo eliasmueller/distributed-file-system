@@ -11,17 +11,17 @@ import util
 
 def request_discovery(device_info_static: deviceInfo.DeviceInfoStatic,
                       device_info_dynamic: deviceInfo.DeviceInfoDynamic) -> str:
-    return f'request, peer discovery, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, senderView: {device_info_dynamic.PEERS}'
+    return f'request, peer discovery, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, senderView: {device_info_dynamic.PEERS}<SEPARATOR> senderVectorClock: {device_info_dynamic.PEER_vector_clock}'
 
 
 def response_discovery(device_info_static: deviceInfo.DeviceInfoStatic,
                        device_info_dynamic: deviceInfo.DeviceInfoDynamic) -> str:
-    return f'response, peer discovery, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, senderView: {device_info_dynamic.PEERS}'
+    return f'response, peer discovery, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, senderView: {device_info_dynamic.PEERS}<SEPARATOR> senderVectorClock: {device_info_dynamic.PEER_vector_clock}'
 
 
 def update_peer_view(device_info_static: deviceInfo.DeviceInfoStatic,
                      device_info_dynamic: deviceInfo.DeviceInfoDynamic) -> str:
-    return f'update, peer view, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, senderView: {device_info_dynamic.PEERS}'
+    return f'update, peer view, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, senderView: {device_info_dynamic.PEERS}<SEPARATOR> senderVectorClock: {device_info_dynamic.PEER_vector_clock}'
 
 
 def remove_peer_view(device_info_static: deviceInfo.DeviceInfoStatic, peersToBeRemoved: List[int]) -> str:
@@ -120,9 +120,6 @@ def response_extractor(message_specification: str, message_payload: str) -> str:
     return ''  # empty answer no further investigation needed
 
 
-def get_message_type(message: str) -> bool:
-    return message.split(',')[1]
-
 def is_leader(message: str) -> bool:
     return message.split(',')[0] == "election" and message.split(',')[1] == " leader"
 
@@ -131,9 +128,27 @@ def is_response(message: str) -> bool:
     return message.split(',')[0] == "response"
 
 
-def get_sender_id(message: str) -> int:
-    return int(message.split(',')[3].split(':')[1].strip())
+def get_message_type(message: str) -> str:
+    return message.split(',')[1]
 
 
 def get_sender_ip(message: str) -> str:
     return str(message.split(",")[2].split(':')[1].strip())
+
+
+def get_sender_id(message: str) -> int:
+    return int(message.split(',')[3].split(':')[1].strip())
+
+
+def get_sender_vector_clock(message: str) -> dict():
+    if get_message_type(message) != " peer discovery":
+        return ""
+    message_dictionary = message.split("<SEPARATOR>")[1].split('{')[1].strip('}').strip().split(',')
+    dictionary = dict()
+    for entry in message_dictionary:
+        if '' == entry:
+            continue
+        key = entry.split(':')[0]
+        value = entry.split(':')[1]
+        dictionary.update({int(key): int(value)})
+    return dictionary
