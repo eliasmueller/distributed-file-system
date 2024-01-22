@@ -1,3 +1,4 @@
+import sys
 import multiprocessing
 from multiprocessing.managers import DictProxy
 
@@ -45,7 +46,13 @@ def start_heartbeat(device_info_static, shared_dict: DictProxy, interval: int):
 
 
 if __name__ == '__main__':
-    device_info_static, device_info_dynamic = deviceInfo.learn_about_myself()
+    if len(sys.argv) > 1:
+        input_id = int(sys.argv[1])
+        input_path = str(sys.argv[2])
+        device_info_static, device_info_dynamic = deviceInfo.initialise_myself(input_id, input_path)
+    else:
+        device_info_static, device_info_dynamic = deviceInfo.initialise_myself()
+
 
     dynamic_manager = multiprocessing.Manager()
     shared_dict = dynamic_manager.dict({'device_info_dynamic': device_info_dynamic, 'device_info_static': device_info_static})

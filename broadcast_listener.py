@@ -42,7 +42,7 @@ class BroadcastListener(multiprocessing.Process):
             try:
                 data, addr = self.listen_socket.recvfrom(self.buffer_size)
                 if data:
-                    print(f"Received broadcast from {addr} with the message: {data.decode()}")
+                    #print(f"Received broadcast from {addr} with the message: {data.decode()}")
                     answer = formater.process_message(self.device_info_static, self.device_info_dynamic, data.decode(), self.shared_queue, self.shared_dict)
                     if answer:
                         self.answer(addr, answer)

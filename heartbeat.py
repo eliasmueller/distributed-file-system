@@ -2,11 +2,12 @@ from datetime import datetime
 from multiprocessing.managers import DictProxy
 import time
 from typing import List
+import socket
 
 import message_formater
 import sender as broadcast_send
 import deviceInfo
-import socket
+import message_formater as formater
 
 
 class Heartbeat:
@@ -17,7 +18,7 @@ class Heartbeat:
         self.leader_ip = None
         self.heartbeat_port = 42044
         self.unicast_socket_sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.unicast_socket_sender.bind((socket.gethostbyname(socket.gethostname()), 42044))
+        self.unicast_socket_sender.bind((device_info_static.MY_IP, 42044))
         self.buffer_size = 1024
         self.run()
 
@@ -44,7 +45,7 @@ class Heartbeat:
 
                 else:
                     print("Heartbeat answer received")
-                    sender_ip = extract_sender_ip(response)
+                    sender_ip = formater.get_sender_ip(response)
                     if sender_ip != self.leader_ip:
                         raise Exception("Received heartbeat response from non leader. This is not allowed")
 
@@ -62,7 +63,7 @@ class Heartbeat:
             self.leader_ip = None
 
     def send_heartbeat_to_leader(self):
-        self.unicast_socket_sender.sendto(str.encode(f"heartbeat,{self.device_info_static.MY_IP}"),
+        self.unicast_socket_sender.sendto(str.encode(formater.request_heartbeat_message(self.device_info_static)),
                                           (self.leader_ip, self.heartbeat_port))
         print(f"Heartbeat sent to leader")
 
@@ -88,9 +89,9 @@ class Heartbeat:
             if response is None:
                 continue
             else:
-                sender_ip = extract_sender_ip(response)
+                sender_ip = formater.get_sender_ip(response)
                 print(f"Received heartbeat message from {sender_ip}. Sending Response...")
-                self.unicast_socket_sender.sendto(str.encode(f"heartbeat,{self.device_info_static.MY_IP}"),
+                self.unicast_socket_sender.sendto(str.encode(formater.response_heartbeat_message(self.device_info_static)),
                                                   (sender_ip, self.heartbeat_port))
                 heartbeat_timestamps[sender_ip] = datetime.now()
 
@@ -121,8 +122,3 @@ class Heartbeat:
         broadcast_send.basic_broadcast(self.device_info_static.LAN_BROADCAST_IP,
                                        self.device_info_static.LAN_BROADCAST_PORT, str(message))
 
-
-def extract_sender_ip(message):
-    message_split = message.split(',')
-    sender_ip = message_split[1]
-    return sender_ip
