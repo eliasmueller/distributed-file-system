@@ -68,7 +68,7 @@ class FileListener(multiprocessing.Process):
         #TODO use the funktion from monitor_local_folder
         self.shared_dict.update(device_info_dynamic = self.device_info_dynamic)
 
-    def vector_clock_conditon(self, sender_vector_clock: dict, sender_ID: int):
+    def vector_clock_condition(self, sender_vector_clock: dict, sender_ID: int):
         self.update_device_info_dynamic()
         my_vector_clock = self.device_info_dynamic.PEER_vector_clock
         print(f"------clock-------curent:{self.device_info_dynamic.PEER_vector_clock}")
@@ -93,7 +93,7 @@ class FileListener(multiprocessing.Process):
         #check if we actually can deliver the message or if we need to hold the changes back in the queue a bit longer
         filename, vector_clock, temp_filename, sender_ID, message_type = self.hold_back_queue[0]
         #holdback check
-        while not self.vector_clock_conditon(vector_clock, sender_ID):
+        while not self.vector_clock_condition(vector_clock, sender_ID):
             print("Holding back message in hold back queue")
             # TODO do we nead to rotate the queue entrys to afoid deadlocks and starvation ?
             # TODO add message to hold back queue and ensure other messages are incoming first
