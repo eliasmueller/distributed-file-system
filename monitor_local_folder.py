@@ -5,6 +5,7 @@ import time
 import deviceInfo
 import file_transfer
 import sender as bSend
+import util
 
 class FolderMonitor:
     def __init__(self,
@@ -16,7 +17,7 @@ class FolderMonitor:
         self.device_info_dynamic = device_info_dynamic
         self.shared_queue = shared_queue
         self.shared_dict = shared_dict
-        self.file_state = self.get_folder_state()
+        self.file_state = self.get_folder_state(self.device_info_static.MY_STORAGE)
         self.is_running = True
 
         self.device_info_dynamic.PEER_file_state = self.file_state
@@ -24,15 +25,11 @@ class FolderMonitor:
 
         self.run()
 
-    def get_folder_state(self):
-        return {f: os.path.getmtime(os.path.join(self.device_info_static.MY_STORAGE, f)) for f in
-                os.listdir(self.device_info_static.MY_STORAGE)}
-
     def check_folder_changes(self):
         # TODO supervise that changes triggered by remote updates are ignored
         self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
         self.file_state = self.device_info_dynamic.PEER_file_state
-        current_state = self.get_folder_state()
+        current_state = self.get_folder_state(self.device_info_static.MY_STORAGE)
 
         added_files = [f for f in current_state if f not in self.file_state]
         deleted_files = [f for f in self.file_state if f not in current_state]

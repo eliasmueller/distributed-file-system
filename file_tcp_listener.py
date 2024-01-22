@@ -41,7 +41,6 @@ class FileListener(multiprocessing.Process):
                 file_name, temp_filename, message_type = self.consistent_order_listen()
                 if temp_filename:
                     print(f"Received file changes")
-                    # TODO what to do with changes now we can update the local file from the ordered reliable multicast
                     self.update_file_from_tempfile(file_name, temp_filename, message_type)
             except KeyboardInterrupt:
                 self.isRunning = False
@@ -63,9 +62,7 @@ class FileListener(multiprocessing.Process):
 
         #update monitor last file change view
         self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
-        self.device_info_dynamic.PEER_file_state = {f: os.path.getmtime(os.path.join(self.device_info_static.MY_STORAGE, f)) for f in
-                                                                os.listdir(self.device_info_static.MY_STORAGE)}
-        #TODO use the funktion from monitor_local_folder
+        self.device_info_dynamic.PEER_file_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
         self.shared_dict.update(device_info_dynamic = self.device_info_dynamic)
 
     def vector_clock_condition(self, sender_vector_clock: dict, sender_ID: int):

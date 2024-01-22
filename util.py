@@ -1,4 +1,5 @@
 import pickle
+import os
 
 import multiprocessing
 import deviceInfo as deviceInfo
@@ -22,3 +23,8 @@ def get_or_default(dictionary: dict() , key) -> int:
     if key in dictionary:
         value = dictionary.get(key)
     return value
+
+
+def get_folder_state(storage_path: str):
+    return {f: os.path.getmtime(os.path.join(storage_path, f)) for f in
+            os.listdir(storage_path)}
