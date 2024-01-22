@@ -17,7 +17,7 @@ class FolderMonitor:
         self.device_info_dynamic = device_info_dynamic
         self.shared_queue = shared_queue
         self.shared_dict = shared_dict
-        self.file_state = self.get_folder_state(self.device_info_static.MY_STORAGE)
+        self.file_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
         self.is_running = True
 
         self.device_info_dynamic.PEER_file_state = self.file_state
@@ -29,7 +29,7 @@ class FolderMonitor:
         # TODO supervise that changes triggered by remote updates are ignored
         self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
         self.file_state = self.device_info_dynamic.PEER_file_state
-        current_state = self.get_folder_state(self.device_info_static.MY_STORAGE)
+        current_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
 
         added_files = [f for f in current_state if f not in self.file_state]
         deleted_files = [f for f in self.file_state if f not in current_state]
@@ -57,12 +57,12 @@ class FolderMonitor:
             pass
 
     def consistent_ordered_multicast_file_change(self, message_type, f): 
+        #this is the start of the sending process for a ordered multicast
         #increase own vector clock entry
         self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
         self.device_info_dynamic.increase_vector_clock_entry(self.device_info_static.PEER_ID, 1)
         self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
-        # TODO instead of (iterating over peers tcp) B multicast use (tcp) R multicast
-        bSend.basic_multicast(self.device_info_static, self.device_info_dynamic, message_type, f)
+        bSend.reliable_multicast(self.device_info_static, self.device_info_dynamic, message_type, f)
 
     def notify_all_peers_about_file_change(self, message_type, files):
         print(f"Change detected: {message_type}, {files}")

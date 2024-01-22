@@ -9,19 +9,34 @@ import deviceInfo as deviceInfo
 
 import broadcast_listener as bListen
 import file_tcp_listener as fListen
+import file_tcp_r_multicast_listener as reliable_Listen
+import file_tcp_o_multicast_listener as ordered_Listen
 
 import heartbeat as hb
 
 
 def establish_listeners(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: DictProxy):
     listeners = []
+
     p_broadcast_listen = bListen.BroadcastListener(device_info_static, device_info_dynamic, shared_queue, shared_dict)
     listeners.append(p_broadcast_listen)
     p_broadcast_listen.start()
 
-    p_file_listen = fListen.FileListener(device_info_static, device_info_dynamic, shared_queue, shared_dict)
+    r_deliver_queue = multiprocessing.Queue()
+    o_deliver_queue = multiprocessing.Queue()
+
+    p_reliable_multicast_listen = reliable_Listen.ReliableMulticastListener(device_info_static, r_deliver_queue, shared_dict)
+    listeners.append(p_reliable_multicast_listen)
+    p_reliable_multicast_listen.start()
+
+    p_ordered_multicast_listen = ordered_Listen.OrderedMulticastListener(device_info_static, device_info_dynamic, r_deliver_queue, o_deliver_queue, shared_dict)
+    listeners.append(p_ordered_multicast_listen)
+    p_ordered_multicast_listen.start()
+
+    p_file_listen = fListen.FileListener(device_info_static, device_info_dynamic, o_deliver_queue, shared_dict)
     listeners.append(p_file_listen)
     p_file_listen.start()
+
     return listeners
 
 

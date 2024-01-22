@@ -19,7 +19,7 @@ def transfer_file(ip, port, device_info_static: deviceInfo.DeviceInfoStatic, mes
     tcp_socket_sender.send(str.encode(formater.get_file_transfer_message(device_info_static,message_type,filename,vector_clock)))
     print(f"Send file {filename} to {ip}.")
 
-    if message_type == " file transfer delete":
+    if message_type == "delete":
         tcp_socket_sender.close()
         return
     
