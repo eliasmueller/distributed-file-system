@@ -82,14 +82,11 @@ def get_broadcast_ip(device_ip, mask):
     network_ip = str(network.broadcast_address)
     return network_ip
 
-def learn_about_myself_total():
-    my_peer_id = uuid.uuid1().int
-    my_storage = userIO.ask_for_folder_path_to_synchronise()
-    return learn_about_myself(my_peer_id, my_storage)
-
-def learn_about_myself(uuid: int, path: str):
-    my_peer_id = uuid
+def initialise_myself(uuid_of_peer:int = uuid.uuid1().int, path: str = ""):
+    my_peer_id = uuid_of_peer
     my_storage = path
+    if path == "":
+        my_storage = userIO.ask_for_folder_path_to_synchronise()
     device_info_static = DeviceInfoStatic(my_peer_id, my_storage)
     device_info_dynamic = DeviceInfoDynamic(my_peer_id, device_info_static.MY_IP)
     device_info_static.print_info()

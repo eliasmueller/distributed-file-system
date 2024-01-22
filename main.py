@@ -46,11 +46,13 @@ def start_heartbeat(device_info_static, shared_dict: DictProxy, interval: int):
 
 
 if __name__ == '__main__':
-    input_id = int(sys.argv[1])
-    input_path = str(sys.argv[2])
+    if len(sys.argv) > 1:
+        input_id = int(sys.argv[1])
+        input_path = str(sys.argv[2])
+        device_info_static, device_info_dynamic = deviceInfo.initialise_myself(input_id, input_path)
+    else:
+        device_info_static, device_info_dynamic = deviceInfo.initialise_myself()
 
-    #device_info_static, device_info_dynamic = deviceInfo.learn_about_myself(input_id, input_path)
-    device_info_static, device_info_dynamic = deviceInfo.learn_about_myself_total()
 
     dynamic_manager = multiprocessing.Manager()
     shared_dict = dynamic_manager.dict({'device_info_dynamic': device_info_dynamic, 'device_info_static': device_info_static})
