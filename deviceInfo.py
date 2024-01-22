@@ -1,6 +1,5 @@
 import socket
 import ipaddress
-from types import NoneType
 import uuid
 import os
 
