@@ -28,3 +28,9 @@ def get_or_default(dictionary: dict() , key) -> int:
 def get_folder_state(storage_path: str):
     return {f: os.path.getmtime(os.path.join(storage_path, f)) for f in
             os.listdir(storage_path)}
+
+
+def delete_file(filename: str, storage_path: str):
+    filepath_file = f"{storage_path}/{filename}"   
+    if os.path.exists(filepath_file):
+        os.remove(filepath_file)

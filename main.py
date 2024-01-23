@@ -25,7 +25,7 @@ def establish_listeners(device_info_static: deviceInfo.DeviceInfoStatic, device_
     r_deliver_queue = multiprocessing.Queue()
     o_deliver_queue = multiprocessing.Queue()
 
-    p_reliable_multicast_listen = reliable_Listen.ReliableMulticastListener(device_info_static, r_deliver_queue, shared_dict)
+    p_reliable_multicast_listen = reliable_Listen.ReliableMulticastListener(device_info_static, device_info_dynamic, r_deliver_queue, shared_dict)
     listeners.append(p_reliable_multicast_listen)
     p_reliable_multicast_listen.start()
 

@@ -40,8 +40,8 @@ def response_heartbeat_message(device_info_static: deviceInfo.DeviceInfoStatic) 
     return f'response, heartbeat, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}'
 
 
-def get_file_transfer_message(device_info_static: deviceInfo.DeviceInfoStatic, message_type: str, filename: str, vector_clock: dict) -> str:
-    return f'update, file transfer {message_type}, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, <SEPARATOR>{filename}<SEPARATOR>{vector_clock}<SEPARATOR>'
+def get_file_transfer_message(device_info_static: deviceInfo.DeviceInfoStatic, message_type: str, filename: str, vector_clock: dict, original_sender_id: int) -> str:
+    return f'update, file transfer {message_type}, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, originalSenderID: {original_sender_id}, <SEPARATOR>{filename}<SEPARATOR>{vector_clock}<SEPARATOR>'
 
 
 # answer extractor
@@ -140,9 +140,15 @@ def get_sender_id(message: str) -> int:
     return int(message.split(',')[3].split(':')[1].strip())
 
 
+def get_original_sender_id(message: str) -> int:
+    if "file transfer" in get_message_type(message):
+        Exception
+    return int(message.split(',')[4].split(':')[1].strip())
+
+
 def get_sender_vector_clock(message: str) -> dict():
     if get_message_type(message) != " peer discovery":
-        return ""
+        return ""#TODO
     message_dictionary = message.split("<SEPARATOR>")[1].split('{')[1].strip('}').strip().split(',')
     dictionary = dict()
     for entry in message_dictionary:

@@ -4,7 +4,8 @@ import os
 
 import file_transfer
 import deviceInfo as deviceInfo
-import util
+import message_formater as formater
+import sender as bSend
 
 buffer_size = 4096
 
@@ -12,10 +13,12 @@ buffer_size = 4096
 class ReliableMulticastListener(multiprocessing.Process):
     def __init__(self, 
                  device_info_static: deviceInfo.DeviceInfoStatic,
+                 device_info_dynamic: deviceInfo.DeviceInfoDynamic,
                  deliver_queue: multiprocessing.Queue,
                  shared_dict: multiprocessing.managers.DictProxy):
         super(ReliableMulticastListener, self).__init__()
         self.device_info_static = device_info_static
+        self.device_info_dynamic = device_info_dynamic
         self.r_deliver_queue = deliver_queue
         self.shared_dict = shared_dict
         self.port = 7771
@@ -24,6 +27,7 @@ class ReliableMulticastListener(multiprocessing.Process):
         self.listen_socket.bind((self.device_info_static.MY_IP, self.port))
         self.buffer_size = buffer_size
         self.isRunning = True
+        self.recieved_messages = [] #TODO clean list entry when all vector clocks are further along in own vector clock
 
     def run(self):
         print(f"Listening to tcp connections on port {self.port}")
@@ -47,14 +51,35 @@ class ReliableMulticastListener(multiprocessing.Process):
                 continue
 
     def r_listen(self, message):
-        #TODO check for duplicates
-        #TODO add to recieved messanges
-        #TODO if sender_id == my_id b-multicast
+        filename, vector_clock, temp_filename, sender_id, message_type, original_sender_id = message
+        if self.is_duplicate(message):
+            #TODO discard and delete its tempfile
+            print("duplicate")
+        self.recieved_messages.append(message)
+        if self.device_info_static.PEER_ID != sender_id:
+            #sender_id != my_id
+            #b-multicast same message agean
+            self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
+            bSend.basic_multicast_for_reliable_resent(device_info_static=self.device_info_static, original_sender_id=sender_id, device_info_dynamic=self.device_info_dynamic, vector_clock=vector_clock, message_type=message_type, file_location_name=temp_filename, file_name=filename)
         #reliable multicast deliver
         if not self.r_deliver_queue.full():
             self.r_deliver_queue.put(message)
         else:
-            print("Exception--------------------------------------------------------------")#TODO remove print
             raise Exception
+
+    def is_duplicate(self, message) -> bool:
+        #TODO dose not match 100%
+        #n_sender_id and n_temp_filename can be different even if it is considered a duplicate message.
+        n_filename, n_vector_clock, n_temp_filename, n_sender_id, n_message_type, n_original_sender_id = message
+        for r_filename, r_vector_clock, r_temp_filename, r_sender_id, r_message_type, r_original_sender_id in self.recieved_messages:
+            if r_original_sender_id != n_original_sender_id:
+                continue
+            if r_filename != n_filename:
+                continue
+            if r_message_type != n_message_type:
+                continue
+            if r_vector_clock == n_vector_clock:
+                return True
+        return False
 
 
