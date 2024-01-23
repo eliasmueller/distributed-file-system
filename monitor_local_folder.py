@@ -73,9 +73,11 @@ class FolderMonitor:
             if f.startswith("lock_"):  # to lock a file another file with same name and the prefix lock_ is created.
                 if message_type == "add":
                     self.lock_file(f)
+                elif message_type == "delete":
+                    self.unlock_file(f.split("lock_")[1], discard=True)
                 continue
             if self.file_is_locked(f):
-                if not self.unlock_file(f):
+                if not self.unlock_file(f, discard=False):
                     continue
             print(f"sending {f}")
             self.consistent_ordered_multicast_file_change(message_type, f)
@@ -96,17 +98,17 @@ class FolderMonitor:
         else:
             os.remove(f"{self.device_info_static.MY_STORAGE}/{filename}")
 
-    def unlock_file(self, filename: str) -> bool:
-        filepath = f"{self.device_info_static.MY_STORAGE}/lock_{filename}"
-        os.remove(filepath)
-        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
-
-        if self.device_info_dynamic.LOCKED_FILES[filename] != "remote":
-            del self.device_info_dynamic.LOCKED_FILES[filename]
+    def unlock_file(self, filename: str, discard: bool) -> bool:
+        if not discard:  # when the lock file is deleted we don't delete anything else
+            filepath = f"{self.device_info_static.MY_STORAGE}/lock_{filename}"
+            os.remove(filepath)
+        if discard or self.device_info_dynamic.LOCKED_FILES[filename] != "remote":  # if there has been no remote change we simply continue
             print(f"Unlocking file {filename} locally.")
-            return True
-        else:
-            del self.device_info_dynamic.LOCKED_FILES[filename]
+            return_val = True
+        else: # remote and local changes -> has to be merged manually
             print(f"File has been edited remotely, please merge locally, your changes will be found in .mod_{filename}.")
             os.system(f"cp {self.device_info_static.MY_STORAGE}/{filename} {self.device_info_static.MY_STORAGE}/.mod_{filename}")
-            return False
+            return_val = False
+        del self.device_info_dynamic.LOCKED_FILES[filename]
+        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+        return return_val
