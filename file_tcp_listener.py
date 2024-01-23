@@ -70,6 +70,7 @@ class FileListener(multiprocessing.Process):
 
         # If a file is locked we keep everything in the hold back queue until unlocked again to ensure consistency and mark the file as remote edited
         if filename in self.device_info_dynamic.LOCKED_FILES.keys():
+            print(f"Received change for locked file {filename}, holding it back in the queue.")
             self.device_info_dynamic.LOCKED_FILES[filename] = "remote"
             return False
 

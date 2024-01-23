@@ -71,7 +71,7 @@ class FolderMonitor:
             if f.startswith("tempversion_"):  # not deliver file changes start with "tempversion_" we do not want to send this.
                 continue
             if f.startswith("lock_"):  # to lock a file another file with same name and the prefix lock_ is created.
-                if message_type != "delete":
+                if message_type == "add":
                     self.lock_file(f)
                 continue
             if self.file_is_locked(f):
@@ -87,14 +87,18 @@ class FolderMonitor:
 
     def lock_file(self, filename: str):
         file = filename.split("lock_")[1]
-        print(f"Locking file {file} locally.")
-        self.device_info_dynamic.LOCKED_FILES[file] = "none"
-        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+        filepath = f"{self.device_info_static.MY_STORAGE}/{file}"
+        if os.path.exists(filepath):
+            print(f"Locking file {file} locally. File can only be unlocked by saving/editing it.")
+            self.device_info_dynamic.LOCKED_FILES[file] = "none"
+            self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+        else:
+            os.remove(f"{self.device_info_static.MY_STORAGE}/{filename}")
 
     def unlock_file(self, filename: str):
         if self.device_info_dynamic.LOCKED_FILES[filename] != "remote":
             print(f"Unlocking file {filename} locally.")
-            filepath = f"{self.device_info_static.MY_STORAGE}/{filename}"
+            filepath = f"{self.device_info_static.MY_STORAGE}/lock_{filename}"
             del self.device_info_dynamic.LOCKED_FILES[filename]
             os.remove(filepath)
         else:
