@@ -92,7 +92,7 @@ class FolderMonitor:
         file = filename.split("lock_")[1]
         filepath = f"{self.device_info_static.MY_STORAGE}/{file}"
         if os.path.exists(filepath):
-            print(f"Locking file {file} locally. File can only be unlocked by saving/editing it.")
+            print(f"Locking file {file} locally.")
             self.device_info_dynamic.LOCKED_FILES[file] = "none"
             self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
         else:
