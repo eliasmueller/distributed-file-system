@@ -3,7 +3,6 @@ import os
 import time
 
 import deviceInfo
-import file_transfer
 import sender as bSend
 import util
 
@@ -17,7 +16,7 @@ class FolderMonitor:
         self.device_info_dynamic = device_info_dynamic
         self.shared_queue = shared_queue
         self.shared_dict = shared_dict
-        self.file_state = self.get_folder_state(self.device_info_static.MY_STORAGE)
+        self.file_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
         self.is_running = True
 
         self.device_info_dynamic.PEER_file_state = self.file_state
@@ -29,7 +28,7 @@ class FolderMonitor:
         # TODO supervise that changes triggered by remote updates are ignored
         self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
         self.file_state = self.device_info_dynamic.PEER_file_state
-        current_state = self.get_folder_state(self.device_info_static.MY_STORAGE)
+        current_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
 
         added_files = [f for f in current_state if f not in self.file_state]
         deleted_files = [f for f in self.file_state if f not in current_state]
@@ -69,10 +68,35 @@ class FolderMonitor:
         for f in files:
             if f.startswith("."):  # Working files could often start with "." we do not want to send this.
                 continue
-            if f.startswith("tempversion_"):  # not delivert file changes start with "tempversion_" we do not want to send this.
+            if f.startswith("tempversion_"):  # not deliver file changes start with "tempversion_" we do not want to send this.
                 continue
+            if f.startswith("lock_"):  # to lock a file another file with same name and the prefix lock_ is created.
+                if message_type != "delete":
+                    self.lock_file(f)
+                continue
+            if self.file_is_locked(f):
+                self.unlock_file(f)
             print(f"sending {f}")
             self.consistent_ordered_multicast_file_change(message_type, f)
                 
     def update_from_queue(self):
         self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
+
+    def file_is_locked(self, filename: str):
+        return filename in self.device_info_dynamic.LOCKED_FILES.keys()
+
+    def lock_file(self, filename: str):
+        file = filename.split("lock_")[1]
+        print(f"Locking file {file} locally.")
+        self.device_info_dynamic.LOCKED_FILES[file] = "none"
+        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+
+    def unlock_file(self, filename: str):
+        if self.device_info_dynamic.LOCKED_FILES[filename] != "remote":
+            print(f"Unlocking file {filename} locally.")
+            filepath = f"{self.device_info_static.MY_STORAGE}/{filename}"
+            del self.device_info_dynamic.LOCKED_FILES[filename]
+            os.remove(filepath)
+        else:
+            print("File has been edited remotely, please merge locally.")
+        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
