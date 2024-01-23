@@ -75,7 +75,8 @@ class FolderMonitor:
                     self.lock_file(f)
                 continue
             if self.file_is_locked(f):
-                self.unlock_file(f)
+                if not self.unlock_file(f):
+                    continue
             print(f"sending {f}")
             self.consistent_ordered_multicast_file_change(message_type, f)
                 
@@ -95,12 +96,17 @@ class FolderMonitor:
         else:
             os.remove(f"{self.device_info_static.MY_STORAGE}/{filename}")
 
-    def unlock_file(self, filename: str):
-        if self.device_info_dynamic.LOCKED_FILES[filename] != "remote":
-            print(f"Unlocking file {filename} locally.")
-            filepath = f"{self.device_info_static.MY_STORAGE}/lock_{filename}"
-            del self.device_info_dynamic.LOCKED_FILES[filename]
-            os.remove(filepath)
-        else:
-            print("File has been edited remotely, please merge locally.")
+    def unlock_file(self, filename: str) -> bool:
+        filepath = f"{self.device_info_static.MY_STORAGE}/lock_{filename}"
+        os.remove(filepath)
         self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+
+        if self.device_info_dynamic.LOCKED_FILES[filename] != "remote":
+            del self.device_info_dynamic.LOCKED_FILES[filename]
+            print(f"Unlocking file {filename} locally.")
+            return True
+        else:
+            del self.device_info_dynamic.LOCKED_FILES[filename]
+            print(f"File has been edited remotely, please merge locally, your changes will be found in .mod_{filename}.")
+            os.system(f"cp {self.device_info_static.MY_STORAGE}/{filename} {self.device_info_static.MY_STORAGE}/.mod_{filename}")
+            return False

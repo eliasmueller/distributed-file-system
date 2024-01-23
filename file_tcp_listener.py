@@ -1,6 +1,7 @@
 import socket
 import multiprocessing
 import os
+import time
 
 import file_transfer
 import deviceInfo as deviceInfo
@@ -72,6 +73,7 @@ class FileListener(multiprocessing.Process):
         if filename in self.device_info_dynamic.LOCKED_FILES.keys():
             print(f"Received change for locked file {filename}, holding it back in the queue.")
             self.device_info_dynamic.LOCKED_FILES[filename] = "remote"
+            self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
             return False
 
         my_vector_clock = self.device_info_dynamic.PEER_vector_clock
@@ -99,6 +101,7 @@ class FileListener(multiprocessing.Process):
         #holdback check
         while not self.vector_clock_condition(vector_clock, sender_ID, filename):
             print("Holding back message in hold back queue")
+            time.sleep(1)
             # TODO do we nead to rotate the queue entrys to afoid deadlocks and starvation ?
             # TODO add message to hold back queue and ensure other messages are incoming first
         #remove it from hold back queue
