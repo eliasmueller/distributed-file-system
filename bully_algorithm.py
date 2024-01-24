@@ -136,7 +136,7 @@ class BullyAlgorithm(multiprocessing.Process):
         self.received_lower_election_inquiry = []
         self.election_id = None
 
-    def send_election_inquiry(self, recipient_id: str, recipient_ip: None):
+    def send_election_inquiry(self, recipient_id: int, recipient_ip: None):
         if not recipient_ip:
             ip = self.device_info_dynamic.PEER_IP_DICT[recipient_id]
         else:

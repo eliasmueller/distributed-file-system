@@ -23,7 +23,7 @@ class Heartbeat:
         self.interval = interval
         self.leader_id = None
         self.leader_ip = None
-        self.peer_ip_dict = []
+        self.peer_ip_dict = {}
         self.heartbeat_port = 42044
         self.unicast_socket_sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.unicast_socket_sender.bind((device_info_static.MY_IP, 42044))
