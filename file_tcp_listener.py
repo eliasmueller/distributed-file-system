@@ -31,18 +31,17 @@ class FileListener(multiprocessing.Process):
         while self.isRunning:
             try:
                 self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
-                if not self.o_deliver_queue.empty(): #TODO change to blocking check instead of spinning empty check
-                    #recieve ordered reliable multicast delivery
-                    file_name, temp_filename, message_type = self.o_deliver_queue.get()
-                    #application has message
-                    if temp_filename:
-                        print(f"Received file changes {message_type}")
-                        if message_type == " file transfer delete":
-                            util.delete_file(file_name, self.device_info_static.MY_STORAGE)
-                            util.delete_file(temp_filename, self.device_info_static.MY_STORAGE)
-                        else:
-                            self.update_file_from_tempfile(file_name, temp_filename, self.device_info_static.MY_STORAGE)
-                        self.update_device_info_dynamic()
+                #recieve ordered reliable multicast delivery
+                file_name, temp_filename, message_type = self.o_deliver_queue.get()
+                #application has message
+                if temp_filename:
+                    print(f"Received file changes {message_type}")
+                    if message_type == " file transfer delete":
+                        util.delete_file(file_name, self.device_info_static.MY_STORAGE)
+                        util.delete_file(temp_filename, self.device_info_static.MY_STORAGE)
+                    else:
+                        self.update_file_from_tempfile(file_name, temp_filename, self.device_info_static.MY_STORAGE)
+                    self.update_device_info_dynamic()
 
             except KeyboardInterrupt:
                 self.isRunning = False

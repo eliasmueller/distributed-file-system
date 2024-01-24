@@ -62,10 +62,7 @@ class ReliableMulticastListener(multiprocessing.Process):
             self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
             bSend.basic_multicast_for_reliable_resent(device_info_static=self.device_info_static, original_sender_id=sender_id, device_info_dynamic=self.device_info_dynamic, vector_clock=vector_clock, message_type=message_type, file_location_name=temp_filename, file_name=filename)
         #reliable multicast deliver
-        if not self.r_deliver_queue.full():
-            self.r_deliver_queue.put(message)
-        else:
-            raise Exception
+        self.r_deliver_queue.put(message)
 
     def is_duplicate(self, message) -> bool:
         #TODO dose not match 100%

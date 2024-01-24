@@ -34,17 +34,13 @@ class OrderedMulticastListener(multiprocessing.Process):
         while self.isRunning:
             try:
                 self.update_device_info_dynamic()
-                if not self.r_deliver_queue.empty(): #TODO change to blocking check instead of spinning empty check
-                    #recieve reliable multicast delivery
-                    message = self.r_deliver_queue.get()
-                    #add to holdback
-                    self.hold_back_queue.append(message)
-                    message =  self.check_hold_back_queue()
-                    #ordered multicast delivery
-                    if not self.o_deliver_queue.full():
-                        self.o_deliver_queue.put(message)
-                    else:
-                        raise Exception
+                #recieve reliable multicast delivery
+                message = self.r_deliver_queue.get()
+                #add to holdback
+                self.hold_back_queue.append(message)
+                message =  self.check_hold_back_queue()
+                #ordered multicast delivery
+                self.o_deliver_queue.put(message)
             except KeyboardInterrupt:
                 self.isRunning = False
             # TODO proper exception handling
