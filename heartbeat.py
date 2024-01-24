@@ -114,6 +114,7 @@ class Heartbeat:
         for dead_id in dead_ids:
             self.device_info_dynamic.PEERS.remove(dead_id)
             del self.device_info_dynamic.PEER_IP_DICT[dead_id]
+            self.device_info_dynamic.delete_vector_clock_entry(dead_id)
             print(f"Removing dead peer {dead_id} from group.")
         self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
 

@@ -37,7 +37,7 @@ class DeviceInfoDynamic:
         self.IS_LEADER_IN_ONE_GROUP = False
         self.LEADER_ID: int | None = None
         self.PEER_file_state = {}
-        self.PEER_vector_clock = dict() # TODO clean peer entries of ofline peers on heartbeat
+        self.PEER_vector_clock = dict()
 
     def print_info(self):
         print("Some dynamic information:")
@@ -56,6 +56,9 @@ class DeviceInfoDynamic:
             if value < peer_clock_val:
                 raise Exception #an unconected peer schould not have vector clocks that are furthere along then network peers
             self.PEER_vector_clock.update({key : max(0, peer_clock_val, value)})
+
+    def delete_vector_clock_entry(self, peer):
+        self.PEER_vector_clock.pop(peer, None)
 
     def increase_vector_clock_entry(self, peer, increment_size: int):
         peer_clock_val = util.get_or_default(self.PEER_vector_clock, peer)
