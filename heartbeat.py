@@ -61,7 +61,7 @@ class Heartbeat:
     def reset_leader_information(self):
         self.leader_ip = None
         self.leader_id = None
-        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.leader_id, self.leader_ip)
+        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.leader_id, self.leader_id)
 
     def get_device_info_update(self):
         self.peer_ip_dict = self.shared_dict[DictKey.peer_ip_dict.value]
