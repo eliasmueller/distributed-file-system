@@ -38,12 +38,12 @@ class BroadcastListener(multiprocessing.Process):
     def listen(self):
         # recvfrom is waiting until it receives something and can not be exited with KeyboardInterrupt
         while self.isRunning:
-            self.device_info_dynamic = self.shared_dict["device_info_dynamic"]
+            self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
             try:
                 data, addr = self.listen_socket.recvfrom(self.buffer_size)
                 if data:
                     #print(f"Received broadcast from {addr} with the message: {data.decode()}")
-                    answer = formater.process_message(self.device_info_static, self.device_info_dynamic, data.decode(), self.shared_queue, self.shared_dict)
+                    answer = formater.process_message(self.device_info_static, self.shared_dict.get("device_info_dynamic"), data.decode(), self.shared_queue, self.shared_dict)
                     if answer:
                         self.answer(addr, answer)
                     if self.device_info_dynamic.LEADER_ID == self.device_info_static.PEER_ID:

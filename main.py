@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
     listeners = establish_listeners(device_info_static, device_info_dynamic, shared_queue, shared_dict)
 
-    p_discovery = multiprocessing.Process(target=discovery.discover_peers, args=(device_info_static, device_info_dynamic, shared_queue, shared_dict))
+    p_discovery = multiprocessing.Process(target=discovery.discover_peers, args=(device_info_static, shared_dict))
     p_discovery.start()
 
     p_bully = start_bully(device_info_static, device_info_dynamic, shared_queue, shared_dict)
