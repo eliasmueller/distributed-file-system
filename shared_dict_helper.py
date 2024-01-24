@@ -11,7 +11,7 @@ class DictKey(Enum):
 
 def update_shared_dict(shared_dict, lock, key: DictKey, value):
     with lock:
-        shared_dict[key] = value
+        shared_dict[key.value] = value
 
 def initialise_shared_dict(shared_dict, lock, device_info_dynamic):
     with lock:
