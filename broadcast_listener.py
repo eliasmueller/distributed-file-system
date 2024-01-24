@@ -10,7 +10,8 @@ static_broadcast_ip = "0.0.0.0"
 
 
 class BroadcastListener(multiprocessing.Process):
-    def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic,
+    def __init__(self, 
+                 device_info_static: deviceInfo.DeviceInfoStatic,
                  device_info_dynamic: deviceInfo.DeviceInfoDynamic,
                  shared_queue: multiprocessing.Queue,
                  shared_dict: DictProxy,
@@ -44,7 +45,7 @@ class BroadcastListener(multiprocessing.Process):
     def listen(self):
         # recvfrom is waiting until it receives something and can not be exited with KeyboardInterrupt
         while self.isRunning:
-            self.device_info_dynamic = self.shared_dict["device_info_dynamic"]
+            self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
             try:
                 data, addr = self.listen_socket.recvfrom(self.buffer_size)
                 if data:

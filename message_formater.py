@@ -51,7 +51,8 @@ def get_file_transfer_message(device_info_static: deviceInfo.DeviceInfoStatic, m
 
 def process_message(device_info_static: deviceInfo.DeviceInfoStatic,
                     device_info_dynamic: deviceInfo.DeviceInfoDynamic,
-                    message: str, shared_queue: multiprocessing.Queue,
+                    message: str,
+                    shared_queue: multiprocessing.Queue,
                     shared_dict: DictProxy,
                     lock) -> str:
     message_split = message.split(',')

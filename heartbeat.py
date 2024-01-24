@@ -34,7 +34,7 @@ class Heartbeat:
     def run(self):
         heartbeat_timeout_counter = 0
         while True:
-            time.sleep(self.interval)
+            time.sleep(5)
             self.get_device_info_update()
 
             if self.leader_ip is None:
