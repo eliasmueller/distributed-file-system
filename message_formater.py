@@ -1,12 +1,15 @@
 # functions to abstract message syntax out of the code
 import ast
 import multiprocessing
+from multiprocessing.managers import DictProxy
 import pickle
 from typing import List
 
 import deviceInfo as deviceInfo
 import electionMessage as electionMessage
 import util
+import shared_dict_helper
+from shared_dict_helper import DictKey
 
 
 def request_discovery(device_info_static: deviceInfo.DeviceInfoStatic,
@@ -46,9 +49,11 @@ def get_file_transfer_message(device_info_static: deviceInfo.DeviceInfoStatic, m
 
 # answer extractor
 
-def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+def process_message(device_info_static: deviceInfo.DeviceInfoStatic,
+                    device_info_dynamic: deviceInfo.DeviceInfoDynamic,
                     message: str, shared_queue: multiprocessing.Queue,
-                    shared_dict: multiprocessing.managers.DictProxy) -> str:
+                    shared_dict: DictProxy,
+                    lock) -> str:
     message_split = message.split(',')
     message_type = message_split[0]
     message_specification = message_split[1]
@@ -61,10 +66,14 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic, device_info
         return response_extractor(message_specification, message_payload)
     elif message_type == 'update':
         peer_id = int(message_sender_id)
-        if peer_id not in device_info_dynamic.PEERS:
-            device_info_dynamic.append_new_peer(peer_id, message_sender_ip)
+        peers = shared_dict[DictKey.peers]
+        peer_ip_dict = shared_dict[DictKey.peer_ip_dict]
+        if peer_id not in peers:
+            peers.append(peer_id)
+            peer_ip_dict[peer_id] = message_sender_ip
             print(f"Updating known peers: {device_info_dynamic.PEERS}")
-            shared_dict.update(device_info_dynamic=device_info_dynamic)
+        shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peers, peers)
+        shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peer_ip_dict, peer_ip_dict)
         return 'ACK, update'
     # this message type is used by the leader to notify the group about dead peers
     elif message_type == 'remove':

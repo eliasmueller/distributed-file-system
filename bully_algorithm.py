@@ -9,6 +9,8 @@ import message_formater as formater
 import deviceInfo
 import electionMessage
 import sender as bSend
+from shared_dict_helper import DictKey
+import shared_dict_helper
 import util
 
 import broadcast_listener as bListen
@@ -16,7 +18,10 @@ import discovery
 
 class BullyAlgorithm(multiprocessing.Process):
     def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic,
-                 device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: DictProxy):
+                 device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+                 shared_queue: multiprocessing.Queue,
+                 shared_dict: DictProxy,
+                 lock):
         super(BullyAlgorithm, self).__init__()
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
@@ -30,10 +35,11 @@ class BullyAlgorithm(multiprocessing.Process):
         self.election_id = None
         self.received_higher_election_inquiry = []
         self.received_lower_election_inquiry = []
+        self.lock = lock
         self.run()
 
     def get_device_info_dynamic(self):
-        self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
+        self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
         self.leader_id = self.device_info_dynamic.LEADER_ID
         if not self.shared_queue.empty():
             queue_message = util.consume(self.shared_queue)
@@ -44,7 +50,7 @@ class BullyAlgorithm(multiprocessing.Process):
             self.device_info_dynamic.PEERS.append(message.SENDER_ID)
         self.device_info_dynamic.PEER_IP_DICT[message.SENDER_ID] = message.SENDER_IP
         self.device_info_dynamic.LEADER_ID = self.leader_id
-        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+        self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
 
     def run(self):
         while self.is_running:
@@ -83,7 +89,7 @@ class BullyAlgorithm(multiprocessing.Process):
             self.send_election_leader()
             self.election_id = None
             self.device_info_dynamic.LEADER_ID = self.leader_id
-            self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+            shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.leader_id, self.leader_id)
 
         else:
             print(f"Process {self.peer_id} is aborting election {self.election_id}.")

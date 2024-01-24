@@ -8,7 +8,12 @@ import message_formater as formater
 buffer_size = 4096
 
 
-def transfer_file(ip, port, device_info_static: deviceInfo.DeviceInfoStatic, message_type: str, vector_clock: dict, filename: str):
+def transfer_file(ip,
+                  port,
+                  device_info_static: deviceInfo.DeviceInfoStatic,
+                  message_type: str,
+                  vector_clock: dict,
+                  filename: str):
     tcp_socket_sender = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_socket_sender.connect((ip, port))
 

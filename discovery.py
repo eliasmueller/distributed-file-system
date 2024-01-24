@@ -1,4 +1,5 @@
 import multiprocessing
+from multiprocessing.managers import DictProxy
 # import ast #Abstract Syntax Trees
 from typing import List
 
@@ -8,8 +9,10 @@ import sender as bSend
 import message_formater as formater
 import util
 
-def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic,
-                   shared_queue: multiprocessing.Queue, shared_dict: multiprocessing.managers.DictProxy):
+def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic,
+                   device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+                   shared_dict: DictProxy,
+                   lock):
     # discover peers
     print("start a discovery")
     message = formater.request_discovery(device_info_static, device_info_dynamic)
@@ -32,8 +35,7 @@ def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, device_info_
     # broadcast collected group view to update als views of other peers
     message = formater.update_peer_view(device_info_static, device_info_dynamic)
     bSend.basic_broadcast(device_info_static.LAN_BROADCAST_IP, device_info_static.LAN_BROADCAST_PORT, str(message))
-    shared_dict.update(device_info_dynamic=device_info_dynamic)
-
+    device_info_dynamic.update_entire_shared_dict(shared_dict, lock)
 
 def interpret_discovery_answers(device_info_static: deviceInfo.DeviceInfoStatic, answers: List[str]):
     # TODO resolve if not all answers are similar

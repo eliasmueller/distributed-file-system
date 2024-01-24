@@ -59,16 +59,31 @@ class DeviceInfoDynamic:
         for key, value in extern_vector_clock.items():
             peer_clock_val = util.get_or_default(self.PEER_vector_clock, key)
             if value < peer_clock_val:
-                raise Exception #an unconected peer schould not have vector clocks that are furthere along then network peers
+                raise Exception # a disconnected peer should not have vector clocks that are further along than network peers
             self.PEER_vector_clock.update({key : max(0, peer_clock_val, value)})
 
     def increase_vector_clock_entry(self, peer, increment_size: int):
         peer_clock_val = util.get_or_default(self.PEER_vector_clock, peer)
         self.PEER_vector_clock.update({peer : max(0, peer_clock_val, peer_clock_val + increment_size)})
 
-    def append_new_peer(self, new_peer_id: int, new_peer_ip: str):
-        self.PEERS.append(new_peer_id)
-        self.PEER_IP_DICT[new_peer_id] = new_peer_ip
+    def get_update_from_shared_dict(self, shared_dict):
+        self.PEERS = shared_dict['peers']
+        self.PEER_IP_DICT = shared_dict['peer_ip_dict']
+        self.GROUPS = shared_dict['groups']
+        self.IS_LEADER_IN_ONE_GROUP = shared_dict['is_leader_in_one_group']
+        self.LEADER_ID = shared_dict['leader_id']
+        self.PEER_file_state = shared_dict['peer_file_state']
+        self.PEER_vector_clock = shared_dict['peer_vector_clock']
+
+    def update_entire_shared_dict(self, shared_dict, lock):
+        with lock:
+            shared_dict['peers'] = self.PEERS
+            shared_dict['peer_ip_dict'] = self.PEER_IP_DICT
+            shared_dict['groups'] = self.GROUPS
+            shared_dict['is_leader_in_one_group'] = self.IS_LEADER_IN_ONE_GROUP
+            shared_dict['leader_id'] = self.LEADER_ID
+            shared_dict['peer_file_state'] = self.PEER_file_state
+            shared_dict['peer_vector_clock'] = self.PEER_vector_clock
 
 def get_host_ip(host_name):
     #self.MY_IP = socket.gethostbyname(host_name)
