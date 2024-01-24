@@ -64,8 +64,8 @@ class Heartbeat:
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.leader_id, self.leader_ip)
 
     def get_device_info_update(self):
-        self.peer_ip_dict = self.shared_dict[DictKey.peer_ip_dict]
-        self.leader_id = self.shared_dict[DictKey.leader_id]
+        self.peer_ip_dict = self.shared_dict[DictKey.peer_ip_dict.value]
+        self.leader_id = self.shared_dict[DictKey.leader_id.value]
         if self.leader_id is not None:
             self.leader_ip = self.peer_ip_dict[self.leader_id]
         else:
@@ -116,7 +116,7 @@ class Heartbeat:
 
     def remove_dead_peers(self, dead_peer_ips: List[str]):
         dead_ids = []
-        peers = self.shared_dict[DictKey.peers]
+        peers = self.shared_dict[DictKey.peers.value]
         for ip in dead_peer_ips:
             for key, value in self.peer_ip_dict.items():
                 if value == ip:

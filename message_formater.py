@@ -67,8 +67,8 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic,
         return response_extractor(message_specification, message_payload)
     elif message_type == 'update':
         peer_id = int(message_sender_id)
-        peers = shared_dict[DictKey.peers]
-        peer_ip_dict = shared_dict[DictKey.peer_ip_dict]
+        peers = shared_dict[DictKey.peers.value]
+        peer_ip_dict = shared_dict[DictKey.peer_ip_dict.value]
         if peer_id not in peers:
             peers.append(peer_id)
             peer_ip_dict[peer_id] = message_sender_ip

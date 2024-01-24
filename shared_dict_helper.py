@@ -1,13 +1,13 @@
 from enum import Enum
 
 class DictKey(Enum):
-    peers = 'peers'
-    peer_ip_dict = 'peer_ip_dict'
-    groups = 'groups'
-    is_leader_in_one_group = 'is_leader_in_one_group'
-    leader_id = 'leader_id'
-    peer_file_state = 'peer_file_state'
-    peer_vector_clock = 'peer_vector_clock'
+    peers = "peers"
+    peer_ip_dict = "peer_ip_dict"
+    groups = "groups"
+    is_leader_in_one_group = "is_leader_in_one_group"
+    leader_id = "leader_id"
+    peer_file_state = "peer_file_state"
+    peer_vector_clock = "peer_vector_clock"
 
 def update_shared_dict(shared_dict, lock, key: DictKey, value):
     with lock:
