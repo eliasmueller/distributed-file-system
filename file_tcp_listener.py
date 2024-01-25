@@ -26,6 +26,7 @@ class FileListener(multiprocessing.Process):
         self.buffer_size = buffer_size
         self.isRunning = True
         self.hold_back_queue = []
+        self.hold_back_locked_files = []
 
     def run(self):
         print("Listening to tcp connections on port 7771")
@@ -39,10 +40,20 @@ class FileListener(multiprocessing.Process):
         # recvfrom is waiting until it receives something and can not be exited with KeyboardInterrupt
         while self.isRunning:
             try:
+                if self.hold_back_locked_files:
+                    for (file_name, temp_filename, message_type) in self.hold_back_locked_files:
+                        if not self.check_locked_file(file_name):
+                            self.update_file_from_tempfile(file_name, temp_filename, message_type)
+
                 file_name, temp_filename, message_type = self.consistent_order_listen()
+
                 if temp_filename:
-                    print(f"Received file changes")
-                    self.update_file_from_tempfile(file_name, temp_filename, message_type)
+                    if self.check_locked_file(file_name):
+                        self.hold_back_locked_files.append((file_name, temp_filename, message_type))
+                        print(f"Not applying received file changes because file is locked locally.")
+                    else:
+                        print(f"Received file changes")
+                        self.update_file_from_tempfile(file_name, temp_filename, message_type)
             except KeyboardInterrupt:
                 self.isRunning = False
             # TODO proper exception handling
@@ -68,14 +79,6 @@ class FileListener(multiprocessing.Process):
 
     def vector_clock_condition(self, sender_vector_clock: dict, sender_ID: int, filename: str):
         self.update_device_info_dynamic()
-
-        # If a file is locked we keep everything in the hold back queue until unlocked again to ensure consistency and mark the file as remote edited
-        if filename in self.device_info_dynamic.LOCKED_FILES.keys():
-            print(f"Received change for locked file {filename}, holding it back in the queue.")
-            self.device_info_dynamic.LOCKED_FILES[filename] = "remote"
-            self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
-            return False
-
         my_vector_clock = self.device_info_dynamic.PEER_vector_clock
         print(f"------clock-------curent:{self.device_info_dynamic.PEER_vector_clock}")
         print(f"------clock-------message:{sender_vector_clock}")
@@ -87,6 +90,16 @@ class FileListener(multiprocessing.Process):
             if util.get_or_default(sender_vector_clock, peer) > util.get_or_default(my_vector_clock, peer):
                 return False
         return True
+
+    def check_locked_file(self, filename) -> bool:
+        # If a file is locked we keep everything in the hold back queue until unlocked again to ensure consistency and mark the file as remote edited
+        if filename in self.device_info_dynamic.LOCKED_FILES.keys():
+            print(f"Received change for locked file {filename}, holding it back in the queue.")
+            self.device_info_dynamic.LOCKED_FILES[filename] = "remote"
+            self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+            return True
+        else:
+            return False
 
     def consistent_order_listen(self) -> (str, str, str):
         # recvfrom is waiting until it receives something and can not be exited with KeyboardInterrupt
