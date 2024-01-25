@@ -41,7 +41,7 @@ class DeviceInfoDynamic:
         self.IS_LEADER_IN_ONE_GROUP = False
         self.LEADER_ID: int | None = None
         self.PEER_file_state = {}
-        self.PEER_vector_clock = dict() # TODO clean peer entries of ofline peers on heartbeat
+        self.PEER_vector_clock = dict()
         self.LOCKED_FILES = {}
 
     def print_info(self):

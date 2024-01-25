@@ -85,7 +85,7 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic,
                 device_info_dynamic.PEERS.remove(dead_id)
                 del device_info_dynamic.PEER_IP_DICT[dead_id]
             print(f"Removing known peers as defined by leader. New group view: {device_info_dynamic.PEERS} ")
-            shared_dict.update(device_info_dynamic=device_info_dynamic)
+            device_info_dynamic.update_entire_shared_dict(shared_dict, lock)
     elif message_type == 'election':
         election_id = message_payload
         sender_id = int(message_sender_id)

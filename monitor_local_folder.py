@@ -1,5 +1,6 @@
 import multiprocessing
 from multiprocessing.managers import DictProxy
+import os
 import time
 
 import deviceInfo
@@ -60,7 +61,7 @@ class FolderMonitor:
         #increase own vector clock entry
         self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
         self.device_info_dynamic.increase_vector_clock_entry(self.device_info_static.PEER_ID, 1)
-        # TODO shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_vector_clock, self.file_state)
+        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_vector_clock, self.device_info_dynamic.PEER_vector_clock)
         # TODO instead of (iterating over peers tcp) B multicast use (tcp) R multicast
         bSend.basic_multicast(self.device_info_static, self.device_info_dynamic, message_type, f)
 
@@ -92,7 +93,7 @@ class FolderMonitor:
         if os.path.exists(filepath):
             print(f"Locking file {file} locally.")
             self.device_info_dynamic.LOCKED_FILES[file] = "none"
-            self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+            self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
         else:
             os.remove(f"{self.device_info_static.MY_STORAGE}/{filename}")
 
@@ -109,5 +110,5 @@ class FolderMonitor:
             return_val = False
         if filename in self.device_info_dynamic.LOCKED_FILES.keys():
             del self.device_info_dynamic.LOCKED_FILES[filename]
-            self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+            self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
         return return_val

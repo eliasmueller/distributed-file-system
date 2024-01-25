@@ -101,7 +101,7 @@ class FileListener(multiprocessing.Process):
         if filename in self.device_info_dynamic.LOCKED_FILES.keys():
             print(f"Received change for locked file {filename}, holding it back in the queue.")
             self.device_info_dynamic.LOCKED_FILES[filename] = "remote"
-            #TODO self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+            self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
             return True
         else:
             return False
