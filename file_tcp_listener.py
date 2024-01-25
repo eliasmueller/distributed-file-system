@@ -1,10 +1,13 @@
 import socket
 import multiprocessing
+from multiprocessing.managers import DictProxy
 import os
 import time
 
 import file_transfer
 import deviceInfo as deviceInfo
+from shared_dict_helper import DictKey
+import shared_dict_helper
 import util
 
 buffer_size = 4096
@@ -12,8 +15,10 @@ buffer_size = 4096
 
 class FileListener(multiprocessing.Process):
     def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic,
-                 device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue,
-                 shared_dict: multiprocessing.managers.DictProxy):
+                 device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+                 shared_queue: multiprocessing.Queue,
+                 shared_dict: DictProxy,
+                 lock):
         super(FileListener, self).__init__()
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
@@ -26,12 +31,13 @@ class FileListener(multiprocessing.Process):
         self.buffer_size = buffer_size
         self.isRunning = True
         self.hold_back_queue = []
+        self.lock = lock
         self.hold_back_locked_files = []
 
     def run(self):
         print("Listening to tcp connections on port 7771")
         try:
-            self.update_device_info_dynamic()
+            self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
             self.listen()
         finally:
             self.listen_socket.close()
@@ -73,12 +79,11 @@ class FileListener(multiprocessing.Process):
             os.replace(filepath_temp, filepath_file)
 
         #update monitor last file change view
-        self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
-        self.device_info_dynamic.PEER_file_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
-        self.shared_dict.update(device_info_dynamic = self.device_info_dynamic)
+        self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
+        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, util.get_folder_state(self.device_info_static.MY_STORAGE))
 
     def vector_clock_condition(self, sender_vector_clock: dict, sender_ID: int, filename: str):
-        self.update_device_info_dynamic()
+        self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
         my_vector_clock = self.device_info_dynamic.PEER_vector_clock
         print(f"------clock-------curent:{self.device_info_dynamic.PEER_vector_clock}")
         print(f"------clock-------message:{sender_vector_clock}")
@@ -96,7 +101,7 @@ class FileListener(multiprocessing.Process):
         if filename in self.device_info_dynamic.LOCKED_FILES.keys():
             print(f"Received change for locked file {filename}, holding it back in the queue.")
             self.device_info_dynamic.LOCKED_FILES[filename] = "remote"
-            self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+            self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
             return True
         else:
             return False
@@ -120,8 +125,9 @@ class FileListener(multiprocessing.Process):
         #remove it from hold back queue
         filename, vector_clock, temp_filename, sender_ID, message_type = self.hold_back_queue.pop()
         #TODO in parallel execution self.hold_back_queue[0] != self.hold_back_queue.pop() possible
+
         self.device_info_dynamic.increase_vector_clock_entry(sender_ID, 1)
-        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_vector_clock, self.device_info_dynamic.PEER_vector_clock)
         #co-deliver message
         return filename, temp_filename, message_type
 
@@ -138,7 +144,3 @@ class FileListener(multiprocessing.Process):
 
     def answer(self, sender_address, message: str):
         self.listen_socket.sendto(str.encode(message), sender_address)
-
-                
-    def update_device_info_dynamic(self):
-        self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")

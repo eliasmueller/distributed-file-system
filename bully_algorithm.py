@@ -9,6 +9,8 @@ import message_formater as formater
 import deviceInfo
 import electionMessage
 import sender as bSend
+from shared_dict_helper import DictKey
+import shared_dict_helper
 import util
 
 import broadcast_listener as bListen
@@ -16,7 +18,10 @@ import discovery
 
 class BullyAlgorithm(multiprocessing.Process):
     def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic,
-                 device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: DictProxy):
+                 device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+                 shared_queue: multiprocessing.Queue,
+                 shared_dict: DictProxy,
+                 lock):
         super(BullyAlgorithm, self).__init__()
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
@@ -30,18 +35,26 @@ class BullyAlgorithm(multiprocessing.Process):
         self.election_id = None
         self.received_higher_election_inquiry = []
         self.received_lower_election_inquiry = []
+        self.lock = lock
         self.run()
 
-    def update_dynamic_info(self):
-        self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
+    def get_device_info_dynamic(self):
+        self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
         self.leader_id = self.device_info_dynamic.LEADER_ID
         if not self.shared_queue.empty():
             queue_message = util.consume(self.shared_queue)
             self.handle_election_message(queue_message)
+    
+    def update_device_info_dynamic(self, message: electionMessage.ElectionMessage):
+        if message.SENDER_ID not in self.device_info_dynamic.PEERS:
+            self.device_info_dynamic.PEERS.append(message.SENDER_ID)
+        self.device_info_dynamic.PEER_IP_DICT[message.SENDER_ID] = message.SENDER_IP
+        self.device_info_dynamic.LEADER_ID = self.leader_id
+        self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
 
     def run(self):
         while self.is_running:
-            self.update_dynamic_info()
+            self.get_device_info_dynamic()
             # If min. 2 members are there AND no leader yet trigger election.
             # TODO clarify with the others, if the dynamic device info should only be updated after inital discovery when leader says so?
             if len(self.device_info_dynamic.PEERS) > 1:
@@ -76,7 +89,7 @@ class BullyAlgorithm(multiprocessing.Process):
             self.send_election_leader()
             self.election_id = None
             self.device_info_dynamic.LEADER_ID = self.leader_id
-            self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+            shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.leader_id, self.leader_id)
 
         else:
             print(f"Process {self.peer_id} is aborting election {self.election_id}.")
@@ -96,7 +109,7 @@ class BullyAlgorithm(multiprocessing.Process):
 
         result = "timeout"
         while now < timeout:
-            self.update_dynamic_info()
+            self.get_device_info_dynamic()
             now = datetime.datetime.now()
             if self.received_lower_election_inquiry:
                 result = "lower"
@@ -112,7 +125,7 @@ class BullyAlgorithm(multiprocessing.Process):
         now = datetime.datetime.now()
         timeout = now + datetime.timedelta(seconds=20)
         while now < timeout:
-            self.update_dynamic_info()
+            self.get_device_info_dynamic()
             now = datetime.datetime.now()
             if self.leader_id:
                 break
@@ -123,7 +136,7 @@ class BullyAlgorithm(multiprocessing.Process):
         self.received_lower_election_inquiry = []
         self.election_id = None
 
-    def send_election_inquiry(self, recipient_id: str, recipient_ip: None):
+    def send_election_inquiry(self, recipient_id: int, recipient_ip: None):
         if not recipient_ip:
             ip = self.device_info_dynamic.PEER_IP_DICT[recipient_id]
         else:
@@ -140,13 +153,6 @@ class BullyAlgorithm(multiprocessing.Process):
         message = formater.get_election_message(self.device_info_static, "leader", self.election_id)
         bSend.basic_broadcast(self.device_info_static.LAN_BROADCAST_IP, self.device_info_static.LAN_BROADCAST_PORT,
                               message)
-
-    def update_device_info_dynamic(self, message: electionMessage.ElectionMessage):
-        if message.SENDER_ID not in self.device_info_dynamic.PEERS:
-            self.device_info_dynamic.PEERS.append(message.SENDER_ID)
-        self.device_info_dynamic.PEER_IP_DICT[message.SENDER_ID] = message.SENDER_IP
-        self.device_info_dynamic.LEADER_ID = self.leader_id
-        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
 
     def handle_election_message(self, message: electionMessage.ElectionMessage):
         self.leader_id = None

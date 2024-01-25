@@ -8,24 +8,33 @@ import message_formater
 import sender as broadcast_send
 import deviceInfo
 import message_formater as formater
+from shared_dict_helper import DictKey
+import shared_dict_helper
 
 
 class Heartbeat:
-    def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic, shared_dict: DictProxy, interval=5):
+    def __init__(self,
+                 device_info_static: deviceInfo.DeviceInfoStatic,
+                 shared_dict: DictProxy,
+                 lock,
+                 interval=5):
         self.device_info_static = device_info_static
         self.shared_dict = shared_dict
         self.interval = interval
+        self.leader_id = None
         self.leader_ip = None
+        self.peer_ip_dict = {}
         self.heartbeat_port = 42044
         self.unicast_socket_sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.unicast_socket_sender.bind((device_info_static.MY_IP, 42044))
         self.buffer_size = 1024
+        self.lock = lock
         self.run()
 
     def run(self):
         heartbeat_timeout_counter = 0
         while True:
-            time.sleep(self.interval)
+            time.sleep(5)
             self.get_device_info_update()
 
             if self.leader_ip is None:
@@ -51,14 +60,14 @@ class Heartbeat:
 
     def reset_leader_information(self):
         self.leader_ip = None
-        self.device_info_dynamic.LEADER_ID = None
-        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+        self.leader_id = None
+        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.leader_id, self.leader_id)
 
     def get_device_info_update(self):
-        self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
-        leader_id = self.device_info_dynamic.LEADER_ID
-        if leader_id is not None:
-            self.leader_ip = self.device_info_dynamic.PEER_IP_DICT[leader_id]
+        self.peer_ip_dict = self.shared_dict[DictKey.peer_ip_dict.value]
+        self.leader_id = self.shared_dict[DictKey.leader_id.value]
+        if self.leader_id is not None:
+            self.leader_ip = self.peer_ip_dict[self.leader_id]
         else:
             self.leader_ip = None
 
@@ -68,11 +77,11 @@ class Heartbeat:
         print(f"Heartbeat sent to leader")
 
     def leader_receive_and_reply(self):
-        heartbeat_timestamps = {value: datetime.now() for value in self.device_info_dynamic.PEER_IP_DICT.values()}
+        heartbeat_timestamps = {value: datetime.now() for value in self.peer_ip_dict.values()}
         heartbeat_timestamps.pop(self.device_info_static.MY_IP)
         while True:
             self.get_device_info_update()
-            if self.device_info_dynamic.LEADER_ID != self.device_info_static.PEER_ID:
+            if self.leader_id != self.device_info_static.PEER_ID:
                 print("Stopping working as a leader")
                 break
 
@@ -107,15 +116,17 @@ class Heartbeat:
 
     def remove_dead_peers(self, dead_peer_ips: List[str]):
         dead_ids = []
+        peers = self.shared_dict[DictKey.peers.value]
         for ip in dead_peer_ips:
-            for key, value in self.device_info_dynamic.PEER_IP_DICT.items():
+            for key, value in self.peer_ip_dict.items():
                 if value == ip:
                     dead_ids.append(key)
         for dead_id in dead_ids:
-            self.device_info_dynamic.PEERS.remove(dead_id)
-            del self.device_info_dynamic.PEER_IP_DICT[dead_id]
+            peers.remove(dead_id)
+            del self.peer_ip_dict[dead_id]
             print(f"Removing dead peer {dead_id} from group.")
-        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_ip_dict, self.peer_ip_dict)
+        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peers, peers)
 
         message = message_formater.remove_peer_view(self.device_info_static, dead_ids)
 

@@ -1,5 +1,6 @@
 import socket
 import multiprocessing
+from multiprocessing.managers import DictProxy
 
 import message_formater as formater
 import deviceInfo as deviceInfo
@@ -9,7 +10,12 @@ static_broadcast_ip = "0.0.0.0"
 
 
 class BroadcastListener(multiprocessing.Process):
-    def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, shared_queue: multiprocessing.Queue, shared_dict: multiprocessing.managers.DictProxy):
+    def __init__(self, 
+                 device_info_static: deviceInfo.DeviceInfoStatic,
+                 device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+                 shared_queue: multiprocessing.Queue,
+                 shared_dict: DictProxy,
+                 lock):
         super(BroadcastListener, self).__init__()
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
@@ -26,6 +32,7 @@ class BroadcastListener(multiprocessing.Process):
         self.listen_socket.bind((static_broadcast_ip, self.device_info_static.LAN_BROADCAST_PORT))
         # self.listen_socket.bind((self.device_info_static.MY_IP, self.device_info_static.LAN_BROADCAST_PORT))
         self.buffer_size = buffer_size
+        self.lock = lock
         self.isRunning = True
     
     def run(self):
@@ -38,12 +45,12 @@ class BroadcastListener(multiprocessing.Process):
     def listen(self):
         # recvfrom is waiting until it receives something and can not be exited with KeyboardInterrupt
         while self.isRunning:
-            self.device_info_dynamic = self.shared_dict["device_info_dynamic"]
+            self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
             try:
                 data, addr = self.listen_socket.recvfrom(self.buffer_size)
                 if data:
                     #print(f"Received broadcast from {addr} with the message: {data.decode()}")
-                    answer = formater.process_message(self.device_info_static, self.device_info_dynamic, data.decode(), self.shared_queue, self.shared_dict)
+                    answer = formater.process_message(self.device_info_static, self.device_info_dynamic, data.decode(), self.shared_queue, self.shared_dict, self.lock)
                     if answer:
                         self.answer(addr, answer)
                     if self.device_info_dynamic.LEADER_ID == self.device_info_static.PEER_ID:
