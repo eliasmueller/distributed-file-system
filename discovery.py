@@ -48,7 +48,7 @@ def interpret_discovery_answers(device_info_static: deviceInfo.DeviceInfoStatic,
             new_peer_view[sender_id] = formater.get_sender_ip(answer)
             # answer_peer_view = formater.process_message()
             # new_peer_view = ast.literal_eval(answer_peer_view)
-        new_vector_clock.update({sender_id : util.get_or_default(formater.get_sender_vector_clock(answer), sender_id)})
+        new_vector_clock.update({sender_id : util.get_or_default(formater.get_sender_vector_clock(answer), str(sender_id))})
         #TODO if other peers know the uuid of this peer with a vector clock > 0 we runn in a loop > discovery message resets vector clock of new id?
     if device_info_static.PEER_ID not in new_peer_view:
         # TODO if two times in list then network duplicates or ID already used

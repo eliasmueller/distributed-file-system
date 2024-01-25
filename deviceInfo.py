@@ -1,7 +1,6 @@
 import socket
 import ipaddress
 import uuid
-import os
 
 import userIO
 import util
@@ -43,6 +42,7 @@ class DeviceInfoDynamic:
         self.LEADER_ID: int | None = None
         self.PEER_file_state = {}
         self.PEER_vector_clock = dict() # TODO clean peer entries of ofline peers on heartbeat
+        self.LOCKED_FILES = {}
 
     def print_info(self):
         print("Some dynamic information:")

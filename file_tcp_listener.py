@@ -1,6 +1,7 @@
 import socket
 import multiprocessing
 import os
+import time
 
 import file_transfer
 import deviceInfo as deviceInfo
@@ -25,6 +26,7 @@ class FileListener(multiprocessing.Process):
         self.buffer_size = buffer_size
         self.isRunning = True
         self.hold_back_queue = []
+        self.hold_back_locked_files = []
 
     def run(self):
         print("Listening to tcp connections on port 7771")
@@ -38,10 +40,20 @@ class FileListener(multiprocessing.Process):
         # recvfrom is waiting until it receives something and can not be exited with KeyboardInterrupt
         while self.isRunning:
             try:
+                if self.hold_back_locked_files:
+                    for (file_name, temp_filename, message_type) in self.hold_back_locked_files:
+                        if not self.check_locked_file(file_name):
+                            self.update_file_from_tempfile(file_name, temp_filename, message_type)
+
                 file_name, temp_filename, message_type = self.consistent_order_listen()
+
                 if temp_filename:
-                    print(f"Received file changes")
-                    self.update_file_from_tempfile(file_name, temp_filename, message_type)
+                    if self.check_locked_file(file_name):
+                        self.hold_back_locked_files.append((file_name, temp_filename, message_type))
+                        print(f"Not applying received file changes because file is locked locally.")
+                    else:
+                        print(f"Received file changes")
+                        self.update_file_from_tempfile(file_name, temp_filename, message_type)
             except KeyboardInterrupt:
                 self.isRunning = False
             # TODO proper exception handling
@@ -65,7 +77,7 @@ class FileListener(multiprocessing.Process):
         self.device_info_dynamic.PEER_file_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
         self.shared_dict.update(device_info_dynamic = self.device_info_dynamic)
 
-    def vector_clock_condition(self, sender_vector_clock: dict, sender_ID: int):
+    def vector_clock_condition(self, sender_vector_clock: dict, sender_ID: int, filename: str):
         self.update_device_info_dynamic()
         my_vector_clock = self.device_info_dynamic.PEER_vector_clock
         print(f"------clock-------curent:{self.device_info_dynamic.PEER_vector_clock}")
@@ -79,6 +91,16 @@ class FileListener(multiprocessing.Process):
                 return False
         return True
 
+    def check_locked_file(self, filename) -> bool:
+        # If a file is locked we keep everything in the hold back queue until unlocked again to ensure consistency and mark the file as remote edited
+        if filename in self.device_info_dynamic.LOCKED_FILES.keys():
+            print(f"Received change for locked file {filename}, holding it back in the queue.")
+            self.device_info_dynamic.LOCKED_FILES[filename] = "remote"
+            self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+            return True
+        else:
+            return False
+
     def consistent_order_listen(self) -> (str, str, str):
         # recvfrom is waiting until it receives something and can not be exited with KeyboardInterrupt
         #add to holdback
@@ -90,8 +112,9 @@ class FileListener(multiprocessing.Process):
         #check if we actually can deliver the message or if we need to hold the changes back in the queue a bit longer
         filename, vector_clock, temp_filename, sender_ID, message_type = self.hold_back_queue[0]
         #holdback check
-        while not self.vector_clock_condition(vector_clock, sender_ID):
+        while not self.vector_clock_condition(vector_clock, sender_ID, filename):
             print("Holding back message in hold back queue")
+            time.sleep(1)
             # TODO do we nead to rotate the queue entrys to afoid deadlocks and starvation ?
             # TODO add message to hold back queue and ensure other messages are incoming first
         #remove it from hold back queue
