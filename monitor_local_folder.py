@@ -109,7 +109,7 @@ class FolderMonitor:
             print(f"File has been edited remotely, please merge locally, your changes will be found in .mod_{filename}.")
             os.system(f"cp {self.device_info_static.MY_STORAGE}/{filename} {self.device_info_static.MY_STORAGE}/.mod_{filename}")
             return_val = False
-        if filename in self.device_info_dynamic.LOCKED_FILES.keys:
+        if filename in self.device_info_dynamic.LOCKED_FILES.keys():
             del self.device_info_dynamic.LOCKED_FILES[filename]
             self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
         return return_val
