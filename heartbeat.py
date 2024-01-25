@@ -125,8 +125,8 @@ class Heartbeat:
             peers.remove(dead_id)
             del self.peer_ip_dict[dead_id]
             print(f"Removing dead peer {dead_id} from group.")
-        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peers, peers)
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_ip_dict, self.peer_ip_dict)
+        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peers, peers)
 
         message = message_formater.remove_peer_view(self.device_info_static, dead_ids)
 
