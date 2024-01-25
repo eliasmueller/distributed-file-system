@@ -1,12 +1,16 @@
 import socket
 import ipaddress
-from types import NoneType
 import uuid
-import os
 
 import userIO
 import util
 
+def get_my_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    my_ip = s.getsockname()[0]
+    s.close()
+    return my_ip
 
 class DeviceInfoStatic:
     def __init__(self, my_peer_ID: int, my_storage: str):
@@ -16,7 +20,7 @@ class DeviceInfoStatic:
 
         # networking
         self.MY_HOST = socket.gethostname()
-        self.MY_IP = get_host_ip(self.MY_HOST)
+        self.MY_IP = get_my_ip()
         self.LAN_BROADCAST_IP = get_broadcast_ip(self.MY_IP, 24)
         self.LAN_BROADCAST_PORT = 5971
 
@@ -38,6 +42,7 @@ class DeviceInfoDynamic:
         self.LEADER_ID: int | None = None
         self.PEER_file_state = {}
         self.PEER_vector_clock = dict()
+        self.LOCKED_FILES = {}
 
     def print_info(self):
         print("Some dynamic information:")
