@@ -56,7 +56,7 @@ def start_heartbeat(device_info_static,
                     shared_dict: DictProxy,
                     lock,
                     interval: int):
-    heartbeat = multiprocessing.Process(target=hb.Heartbeat, args=(device_info_static, shared_dict, interval, lock))
+    heartbeat = multiprocessing.Process(target=hb.Heartbeat, args=(device_info_static, shared_dict, lock, interval))
     heartbeat.daemon = True
     heartbeat.start()
     return heartbeat
