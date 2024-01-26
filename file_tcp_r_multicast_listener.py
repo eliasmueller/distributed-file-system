@@ -15,12 +15,14 @@ class ReliableMulticastListener(multiprocessing.Process):
                  device_info_static: deviceInfo.DeviceInfoStatic,
                  device_info_dynamic: deviceInfo.DeviceInfoDynamic,
                  deliver_queue: multiprocessing.Queue,
-                 shared_dict: multiprocessing.managers.DictProxy):
+                 shared_dict: multiprocessing.managers.DictProxy,
+                 lock):
         super(ReliableMulticastListener, self).__init__()
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
         self.r_deliver_queue = deliver_queue
         self.shared_dict = shared_dict
+        self.lock = lock
         self.port = 7771
         # Create a TCP socket
         self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -59,7 +61,7 @@ class ReliableMulticastListener(multiprocessing.Process):
         if self.device_info_static.PEER_ID != sender_id:
             #sender_id != my_id
             #b-multicast same message agean
-            self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
+            self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
             bSend.basic_multicast_for_reliable_resent(device_info_static=self.device_info_static, original_sender_id=sender_id, device_info_dynamic=self.device_info_dynamic, vector_clock=vector_clock, message_type=message_type, file_location_name=temp_filename, file_name=filename)
         #reliable multicast deliver
         self.r_deliver_queue.put(message)

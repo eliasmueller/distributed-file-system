@@ -30,11 +30,11 @@ def establish_listeners(device_info_static: deviceInfo.DeviceInfoStatic,
     r_deliver_queue = multiprocessing.Queue()
     o_deliver_queue = multiprocessing.Queue()
 
-    p_reliable_multicast_listen = reliable_Listen.ReliableMulticastListener(device_info_static, device_info_dynamic, r_deliver_queue, shared_dict)
+    p_reliable_multicast_listen = reliable_Listen.ReliableMulticastListener(device_info_static, device_info_dynamic, r_deliver_queue, shared_dict, lock)
     listeners.append(p_reliable_multicast_listen)
     p_reliable_multicast_listen.start()
 
-    p_ordered_multicast_listen = ordered_Listen.OrderedMulticastListener(device_info_static, device_info_dynamic, r_deliver_queue, o_deliver_queue, shared_dict)
+    p_ordered_multicast_listen = ordered_Listen.OrderedMulticastListener(device_info_static, device_info_dynamic, r_deliver_queue, o_deliver_queue, shared_dict, lock)
     listeners.append(p_ordered_multicast_listen)
     p_ordered_multicast_listen.start()
 
@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     listeners = establish_listeners(device_info_static, device_info_dynamic, shared_queue, shared_device_info_dynamic, lock)
 
-    p_discovery = multiprocessing.Process(target=discovery.discover_peers, args=(device_info_static, shared_device_info_dynamic, lock))
+    p_discovery = multiprocessing.Process(target=discovery.discover_peers, args=(device_info_static, device_info_dynamic, shared_device_info_dynamic, lock))
     p_discovery.start()
 
     p_bully = start_bully(device_info_static, device_info_dynamic, shared_queue, shared_device_info_dynamic, lock)

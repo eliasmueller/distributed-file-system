@@ -10,10 +10,13 @@ import message_formater as formater
 import util
 
 
-def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, shared_dict: DictProxy, lock):
+def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic,
+                   device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+                   shared_dict: DictProxy,
+                   lock):
     # discover peers
     print("start a discovery")
-    device_info_dynamic = shared_dict.get("device_info_dynamic")
+    device_info_dynamic.update_entire_shared_dict(shared_dict, lock)
     message = formater.request_discovery(device_info_static, device_info_dynamic)
     bSend.basic_broadcast(device_info_static.LAN_BROADCAST_IP, device_info_static.LAN_BROADCAST_PORT, str(message))
     answers = []

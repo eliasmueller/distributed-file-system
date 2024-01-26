@@ -10,18 +10,20 @@ buffer_size = 4096
 
 
 class OrderedMulticastListener(multiprocessing.Process):
-    def __init__(self, 
+    def __init__(self,
                  device_info_static: deviceInfo.DeviceInfoStatic,
-                 device_info_dynamic: deviceInfo.DeviceInfoDynamic, 
-                 recieve_queue: multiprocessing.Queue,
+                 device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+                 receive_queue: multiprocessing.Queue,
                  deliver_queue: multiprocessing.Queue,
-                 shared_dict: multiprocessing.managers.DictProxy):
+                 shared_dict: multiprocessing.managers.DictProxy,
+                 lock):
         super(OrderedMulticastListener, self).__init__()
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
-        self.r_deliver_queue = recieve_queue
+        self.r_deliver_queue = receive_queue
         self.o_deliver_queue = deliver_queue
         self.shared_dict = shared_dict
+        self.lock = lock
         self.isRunning = True
         self.hold_back_queue = []
 
@@ -78,4 +80,4 @@ class OrderedMulticastListener(multiprocessing.Process):
         return filename, temp_filename, message_type
                 
     def update_device_info_dynamic(self):
-        self.device_info_dynamic = self.shared_dict.get("device_info_dynamic")
+        self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
