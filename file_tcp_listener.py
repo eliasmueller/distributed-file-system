@@ -47,6 +47,7 @@ class FileListener(multiprocessing.Process):
                 file_name, temp_filename, message_type = self.o_deliver_queue.get()
                 #application has message
                 if temp_filename:
+                    self.update_device_info_dynamic()
                     if self.check_locked_file(file_name):
                         self.hold_back_locked_files.append((file_name, temp_filename, message_type))
                         print(f"Not applying received file changes because file is locked locally.")
@@ -76,7 +77,6 @@ class FileListener(multiprocessing.Process):
     def update_device_info_dynamic(self):
         #update monitor last file change view
         self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
-        self.device_info_dynamic.PEER_file_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, util.get_folder_state(self.device_info_static.MY_STORAGE))
 
     def check_locked_file(self, filename) -> bool:
