@@ -43,6 +43,7 @@ class OrderedMulticastListener(multiprocessing.Process):
 
                 #TODO sort hold back queue
                 self.hold_back_queue = sorted(self.hold_back_queue, key=cmp_to_key(self.compare_vector_clocks))
+                deliver_list = []
                 for entry in self.hold_back_queue.copy():#check if we actually can deliver the message or if we need to hold the changes back in the queue a bit longer
                     filename, vector_clock, temp_filename, sender_ID, message_type, original_sender_id = entry
                     #holdback check
@@ -55,8 +56,10 @@ class OrderedMulticastListener(multiprocessing.Process):
                     self.device_info_dynamic.increase_vector_clock_entry(original_sender_id, 1)
                     self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
                     #co-deliver message
-                    #ordered multicast delivery
-                    self.o_deliver_queue.put(filename, temp_filename, message_type)
+                    deliver_list.append((filename, temp_filename, message_type))
+                #ordered multicast delivery
+                for entry in deliver_list:
+                    self.o_deliver_queue.put(entry)
             except KeyboardInterrupt:
                 self.isRunning = False
             # TODO proper exception handling

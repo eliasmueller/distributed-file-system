@@ -44,7 +44,7 @@ class FileListener(multiprocessing.Process):
                         if not self.check_locked_file(file_name):
                             self.update_file_from_tempfile(file_name, temp_filename, message_type)
                 #recieve ordered reliable multicast delivery
-                file_name, temp_filename, message_type = self.o_deliver_queue.get()
+                (file_name, temp_filename, message_type) = self.o_deliver_queue.get()
                 #application has message
                 if temp_filename:
                     self.update_device_info_dynamic()
