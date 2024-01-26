@@ -96,7 +96,7 @@ class FolderMonitor:
         if os.path.exists(filepath):
             print(f"Locking file {file} locally.")
             self.device_info_dynamic.LOCKED_FILES[file] = "none"
-            self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
+            shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.locked_files, self.device_info_dynamic.LOCKED_FILES)
         else:
             os.remove(f"{self.device_info_static.MY_STORAGE}/{filename}")
 

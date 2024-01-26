@@ -77,6 +77,7 @@ class DeviceInfoDynamic:
         self.LEADER_ID = shared_dict['leader_id']
         self.PEER_file_state = shared_dict['peer_file_state']
         self.PEER_vector_clock = shared_dict['peer_vector_clock']
+        self.LOCKED_FILES = shared_dict['locked_files']
 
     def update_entire_shared_dict(self, shared_dict, lock):
         with lock:
@@ -87,6 +88,7 @@ class DeviceInfoDynamic:
             shared_dict['leader_id'] = self.LEADER_ID
             shared_dict['peer_file_state'] = self.PEER_file_state
             shared_dict['peer_vector_clock'] = self.PEER_vector_clock
+            shared_dict['locked_files'] = self.LOCKED_FILES
 
 def get_host_ip(host_name):
     #self.MY_IP = socket.gethostbyname(host_name)
