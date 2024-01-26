@@ -80,4 +80,4 @@ class OrderedMulticastListener(multiprocessing.Process):
         return filename, temp_filename, message_type
                 
     def update_device_info_dynamic(self):
-        self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
+        self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)

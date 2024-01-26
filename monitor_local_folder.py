@@ -48,7 +48,6 @@ class FolderMonitor:
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, self.file_state)
 
     def run(self):
-        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, self.file_state)
         try:
             while self.is_running:
                 self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)

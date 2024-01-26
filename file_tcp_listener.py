@@ -76,6 +76,7 @@ class FileListener(multiprocessing.Process):
     def update_device_info_dynamic(self):
         #update monitor last file change view
         self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
+        self.device_info_dynamic.PEER_file_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, util.get_folder_state(self.device_info_static.MY_STORAGE))
 
     def check_locked_file(self, filename) -> bool:
