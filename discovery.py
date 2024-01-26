@@ -16,7 +16,7 @@ def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic,
                    lock):
     # discover peers
     print("start a discovery")
-    device_info_dynamic.update_entire_shared_dict(shared_dict, lock)
+    device_info_dynamic.get_update_from_shared_dict(shared_dict)
     message = formater.request_discovery(device_info_static, device_info_dynamic)
     bSend.basic_broadcast(device_info_static.LAN_BROADCAST_IP, device_info_static.LAN_BROADCAST_PORT, str(message))
     answers = []

@@ -38,7 +38,7 @@ class FileListener(multiprocessing.Process):
         # is waiting until it receives something and can not be exited with KeyboardInterrupt
         while self.isRunning:
             try:
-                self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
+                self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
                 if self.hold_back_locked_files:
                     for (file_name, temp_filename, message_type) in self.hold_back_locked_files:
                         if not self.check_locked_file(file_name):
