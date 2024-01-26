@@ -8,7 +8,14 @@ import message_formater as formater
 buffer_size = 4096
 
 
-def transfer_file(ip, port, original_sender_id: int, device_info_static: deviceInfo.DeviceInfoStatic, message_type: str, vector_clock: dict, file_location_name: str, filename: str):
+def transfer_file(ip,
+                  port,
+                  original_sender_id: int,
+                  device_info_static: deviceInfo.DeviceInfoStatic,
+                  message_type: str,
+                  vector_clock: dict,
+                  file_location_name: str,
+                  filename: str):
     tcp_socket_sender = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_socket_sender.connect((ip, port))
 
@@ -48,14 +55,14 @@ def listen_for_file(listen_socket, device_info_static: deviceInfo.DeviceInfoStat
     temp_filename = f"tempversion_{filename}"
 
     if message_type != " file transfer delete":
-        
+
         filepath = f"{device_info_static.MY_STORAGE}/{temp_filename}"
-        
+
         #make sure that the temp file exists + write beginning of file
         with open(filepath, "w") as f:
             if received[3] != "":  # possibly already the beginning of the file
                 f.write(received[3])
-                #TODO dose not work in some unknown specific cases 
+                #TODO dose not work in some unknown specific cases
 
         with open(filepath, "wb") as f:
             while True:

@@ -27,7 +27,10 @@ def listen_for_broadcast_answer(timeout_seconds: int) -> str:
         if data:
             return data.decode()
 
-def basic_multicast(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, message_type, file_name: str):
+def basic_multicast(device_info_static: deviceInfo.DeviceInfoStatic,
+                    device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+                    message_type,
+                    file_name: str):
     for p in device_info_dynamic.PEERS:
         if p != device_info_static.PEER_ID:
             ip = device_info_dynamic.PEER_IP_DICT[p]
