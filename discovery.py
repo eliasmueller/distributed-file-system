@@ -9,13 +9,11 @@ import sender as bSend
 import message_formater as formater
 import util
 
-def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic,
-                   device_info_dynamic: deviceInfo.DeviceInfoDynamic,
-                   shared_dict: DictProxy,
-                   lock):
+
+def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic, shared_dict: DictProxy, lock):
     # discover peers
     print("start a discovery")
-    # TODO device_info_dynamic = shared_dict.get("device_info_dynamic")
+    device_info_dynamic = shared_dict.get("device_info_dynamic")
     message = formater.request_discovery(device_info_static, device_info_dynamic)
     bSend.basic_broadcast(device_info_static.LAN_BROADCAST_IP, device_info_static.LAN_BROADCAST_PORT, str(message))
     answers = []
@@ -52,8 +50,10 @@ def interpret_discovery_answers(device_info_static: deviceInfo.DeviceInfoStatic,
             new_peer_view[sender_id] = formater.get_sender_ip(answer)
             # answer_peer_view = formater.process_message()
             # new_peer_view = ast.literal_eval(answer_peer_view)
-            new_vector_clock.update({sender_id: util.get_or_default(formater.get_sender_vector_clock(answer), sender_id)})
-            new_vector_clock.update({device_info_static.PEER_ID: util.get_or_default(formater.get_sender_vector_clock(answer), device_info_static.PEER_ID)})
+            new_vector_clock.update(
+                {sender_id: util.get_or_default(formater.get_sender_vector_clock(answer), sender_id)})
+            new_vector_clock.update({device_info_static.PEER_ID: util.get_or_default(
+                formater.get_sender_vector_clock(answer), device_info_static.PEER_ID)})
     if device_info_static.PEER_ID not in new_peer_view:
         # TODO if two times in list then network duplicates or ID already used
         new_peer_view[device_info_static.PEER_ID] = device_info_static.MY_IP
