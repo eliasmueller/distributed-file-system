@@ -75,7 +75,7 @@ class OrderedMulticastListener(multiprocessing.Process):
         filename, vector_clock, temp_filename, sender_ID, message_type, original_sender_id = self.hold_back_queue.pop()
         #TODO in parallel execution self.hold_back_queue[0] != self.hold_back_queue.pop() possible
         self.device_info_dynamic.increase_vector_clock_entry(original_sender_id, 1)
-        self.shared_dict.update(device_info_dynamic=self.device_info_dynamic)
+        self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
         #co-deliver message
         return filename, temp_filename, message_type
                 
