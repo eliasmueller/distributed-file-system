@@ -105,6 +105,7 @@ if __name__ == '__main__':
     p_discovery.join()
 
     # device_info_dynamic = shared_dict.get("device_info_dynamic")
+    device_info_dynamic.get_update_from_shared_dict(shared_device_info_dynamic)
     device_info_dynamic.print_info()
 
     for listener in listeners:

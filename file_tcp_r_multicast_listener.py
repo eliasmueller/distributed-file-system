@@ -57,6 +57,7 @@ class ReliableMulticastListener(multiprocessing.Process):
         if self.is_duplicate(message):
             #TODO discard and delete its tempfile
             print("duplicate")
+            return
         self.recieved_messages.append(message)
         if self.device_info_static.PEER_ID != sender_id:
             #sender_id != my_id
@@ -67,7 +68,6 @@ class ReliableMulticastListener(multiprocessing.Process):
         self.r_deliver_queue.put(message)
 
     def is_duplicate(self, message) -> bool:
-        #TODO dose not match 100%
         #n_sender_id and n_temp_filename can be different even if it is considered a duplicate message.
         n_filename, n_vector_clock, n_temp_filename, n_sender_id, n_message_type, n_original_sender_id = message
         for r_filename, r_vector_clock, r_temp_filename, r_sender_id, r_message_type, r_original_sender_id in self.recieved_messages:
