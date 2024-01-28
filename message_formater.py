@@ -72,9 +72,9 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic,
         if peer_id not in peers:
             peers.append(peer_id)
             peer_ip_dict[peer_id] = message_sender_ip
-            print(f"Updating known peers: {device_info_dynamic.PEERS}")
             shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peer_ip_dict, peer_ip_dict)
             shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peers, peers)
+            print(f"Updating known peers: {peers}")
         return 'ACK, update'
     # this message type is used by the leader to notify the group about dead peers
     elif message_type == 'remove':
