@@ -52,7 +52,7 @@ def listen_for_file(listen_socket, device_info_static: deviceInfo.DeviceInfoStat
 
     message_type = formater.get_message_type(received[0])
     print(f"Receiving message with {message_type} file {filename} and vector clock {vector_clock}.")
-    temp_filename = f"tempversion_{filename}"
+    temp_filename = f"tempversion_{vector_clock}_{filename}"
 
     if message_type != " file transfer delete":
 
