@@ -30,7 +30,6 @@ class FolderMonitor:
         self.run()
 
     def check_folder_changes(self):
-        # TODO supervise that changes triggered by remote updates are ignored
         assert self.device_info_dynamic is not None
         self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
         self.file_state = self.device_info_dynamic.PEER_file_state

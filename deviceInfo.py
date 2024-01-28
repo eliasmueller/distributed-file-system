@@ -92,7 +92,6 @@ class DeviceInfoDynamic:
 
 def get_host_ip(host_name):
     #self.MY_IP = socket.gethostbyname(host_name)
-    #TODO if the peer has more than one ip address find the right one
     ip = socket.gethostbyname_ex(host_name)
     print(ip)
     return ip[2][len(ip[2])-1]

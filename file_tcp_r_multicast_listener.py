@@ -30,8 +30,7 @@ class ReliableMulticastListener(multiprocessing.Process):
         self.listen_socket.bind((self.device_info_static.MY_IP, self.port))
         self.buffer_size = buffer_size
         self.isRunning = True
-        self.recieved_messages = [] #TODO clean list entry when all vector clocks are further along in own vector clock
-
+        self.recieved_messages = []
     def run(self):
         print(f"Listening to tcp connections on port {self.port}")
         try:
@@ -49,7 +48,6 @@ class ReliableMulticastListener(multiprocessing.Process):
                 self.r_listen(message)
             except KeyboardInterrupt:
                 self.isRunning = False
-            # TODO proper exception handling
             except Exception:
                 continue
 

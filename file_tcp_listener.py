@@ -63,7 +63,6 @@ class FileListener(multiprocessing.Process):
 
             except KeyboardInterrupt:
                 self.isRunning = False
-            # TODO proper exception handling
             except Exception:
                 continue
 

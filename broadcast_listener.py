@@ -57,7 +57,6 @@ class BroadcastListener(multiprocessing.Process):
                         # if this peer is the leader let the new one know already
                         self.answer(addr, formater.get_election_message(self.device_info_static, "leader", "init-no-election-id"))
             except KeyboardInterrupt:
-                # TODO dose not work yet
                 self.isRunning = False
 
     def answer(self, sender_address, message: str):
