@@ -152,7 +152,7 @@ def get_sender_id(message: str) -> int:
 
 def get_original_sender_id(message: str) -> int:
     if "file transfer" in get_message_type(message):
-        Exception
+        raise Exception
     return int(message.split(',')[4].split(':')[1].strip())
 
 
