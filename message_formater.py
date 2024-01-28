@@ -139,7 +139,7 @@ def is_response(message: str) -> bool:
 
 
 def get_message_type(message: str) -> str:
-    return message.split(',')[1]
+    return message.split(',')[1].lstrip()
 
 
 def get_sender_ip(message: str) -> str:
@@ -157,7 +157,7 @@ def get_original_sender_id(message: str) -> int:
 
 
 def get_sender_vector_clock(message: str) -> dict():
-    if get_message_type(message) != " peer discovery":
+    if get_message_type(message) != "peer discovery":
         return ""#TODO
     message_dictionary = message.split("<SEPARATOR>")[1].split('{')[1].strip('}').strip().split(',')
     dictionary = dict()

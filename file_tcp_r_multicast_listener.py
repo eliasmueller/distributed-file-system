@@ -75,7 +75,7 @@ class ReliableMulticastListener(multiprocessing.Process):
                 continue
             if r_filename != n_filename:
                 continue
-            if r_message_type != n_message_type:
+            if r_message_type.strip() != n_message_type.strip():
                 continue
             if r_vector_clock == n_vector_clock:
                 return True
