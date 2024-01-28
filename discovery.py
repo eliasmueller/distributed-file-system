@@ -41,7 +41,6 @@ def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic,
 
 
 def interpret_discovery_answers(device_info_static: deviceInfo.DeviceInfoStatic, answers: List[str]):
-    # TODO resolve if not all answers are similar
     new_peer_view = {}
     new_vector_clock = dict()
     leader_id = None
@@ -51,13 +50,10 @@ def interpret_discovery_answers(device_info_static: deviceInfo.DeviceInfoStatic,
             leader_id = sender_id
         elif formater.is_response(answer):
             new_peer_view[sender_id] = formater.get_sender_ip(answer)
-            # answer_peer_view = formater.process_message()
-            # new_peer_view = ast.literal_eval(answer_peer_view)
             new_vector_clock.update(
                 {sender_id: util.get_or_default(formater.get_sender_vector_clock(answer), sender_id)})
             new_vector_clock.update({device_info_static.PEER_ID: util.get_or_default(
                 formater.get_sender_vector_clock(answer), device_info_static.PEER_ID)})
     if device_info_static.PEER_ID not in new_peer_view:
-        # TODO if two times in list then network duplicates or ID already used
         new_peer_view[device_info_static.PEER_ID] = device_info_static.MY_IP
     return new_peer_view, leader_id, new_vector_clock

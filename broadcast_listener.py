@@ -28,7 +28,6 @@ class BroadcastListener(multiprocessing.Process):
         self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # Bind socket to address and port
-        # TODO check why the device's IP is not working and the static broadcast IP has to be used for broadcasting
         self.listen_socket.bind((static_broadcast_ip, self.device_info_static.LAN_BROADCAST_PORT))
         # self.listen_socket.bind((self.device_info_static.MY_IP, self.device_info_static.LAN_BROADCAST_PORT))
         self.buffer_size = buffer_size

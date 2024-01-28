@@ -61,7 +61,6 @@ class OrderedMulticastListener(multiprocessing.Process):
                     self.o_deliver_queue.put(entry)
             except KeyboardInterrupt:
                 self.isRunning = False
-            # TODO proper exception handling
             except Exception:
                 continue
 
