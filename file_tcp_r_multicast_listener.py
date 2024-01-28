@@ -54,7 +54,8 @@ class ReliableMulticastListener(multiprocessing.Process):
     def r_listen(self, message):
         filename, vector_clock, temp_filename, sender_id, message_type, original_sender_id = message
         if self.is_duplicate(message):
-            util.delete_file(temp_filename, self.device_info_static.MY_STORAGE)
+            # TODO deleting here is dangerous, as it is not clear that the message has been delivered already. Probably we need a cleanup afterwards
+            #  util.delete_file(temp_filename, self.device_info_static.MY_STORAGE)
             print("duplicate")
             return
         self.recieved_messages.append(message)
