@@ -44,7 +44,7 @@ def response_heartbeat_message(device_info_static: deviceInfo.DeviceInfoStatic) 
 
 
 def get_file_transfer_message(device_info_static: deviceInfo.DeviceInfoStatic, message_type: str, filename: str, vector_clock: dict, original_sender_id: int) -> str:
-    return f'update, file transfer {message_type}, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, originalSenderID: {original_sender_id}, <SEPARATOR>{filename}<SEPARATOR>{vector_clock}<SEPARATOR>'
+    return f'update, {message_type}, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, originalSenderID: {original_sender_id}, <SEPARATOR>{filename}<SEPARATOR>{vector_clock}<SEPARATOR>'
 
 
 # answer extractor
@@ -151,8 +151,8 @@ def get_sender_id(message: str) -> int:
 
 
 def get_original_sender_id(message: str) -> int:
-    if "file transfer" in get_message_type(message):
-        raise Exception
+    #if "file transfer" in get_message_type(message):
+    #    raise Exception
     return int(message.split(',')[4].split(':')[1].strip())
 
 
