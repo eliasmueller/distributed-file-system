@@ -40,6 +40,16 @@ def transfer_file(ip,
         f.close()
     tcp_socket_sender.close()
 
+def vector_clock_to_path_string(vector_clock: dict):
+    vc_str = str(vector_clock)
+    vc_str = vc_str.replace(':','_')
+    vc_str = vc_str.replace('(','_')
+    vc_str = vc_str.replace('{','_')
+    vc_str = vc_str.replace(')','_')
+    vc_str = vc_str.replace('}','_')
+    vc_str = vc_str.replace(',','_')
+    vc_str = vc_str.replace(' ','')
+    return vc_str
 
 def listen_for_file(listen_socket, device_info_static: deviceInfo.DeviceInfoStatic) -> (str, dict, str, int, str):
     listen_socket.listen()
@@ -52,11 +62,12 @@ def listen_for_file(listen_socket, device_info_static: deviceInfo.DeviceInfoStat
 
     message_type = formater.get_message_type(received[0])
     print(f"Receiving message with {message_type} file {filename} and vector clock {vector_clock}.")
-    temp_filename = f"tempversion_{vector_clock}_{filename}"
+    temp_filename = f"tempversion_{vector_clock_to_path_string(vector_clock)}_{filename}"
 
     if message_type != " file transfer delete":
 
         filepath = f"{device_info_static.MY_STORAGE}/{temp_filename}"
+        #print(f"{filepath}")
 
         #make sure that the temp file exists + write beginning of file
         with open(filepath, "w") as f:

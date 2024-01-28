@@ -6,6 +6,7 @@ import file_transfer
 import deviceInfo as deviceInfo
 import message_formater as formater
 import sender as bSend
+import util
 
 buffer_size = 4096
 
@@ -66,6 +67,7 @@ class ReliableMulticastListener(multiprocessing.Process):
             bSend.basic_multicast_for_reliable_resent(device_info_static=self.device_info_static, original_sender_id=sender_id, device_info_dynamic=self.device_info_dynamic, vector_clock=vector_clock, message_type=message_type, file_location_name=temp_filename, file_name=filename)
         #reliable multicast deliver
         self.r_deliver_queue.put(message)
+        self.remove_old_recieved_messages()
 
     def is_duplicate(self, message) -> bool:
         #n_sender_id and n_temp_filename can be different even if it is considered a duplicate message.
@@ -80,5 +82,17 @@ class ReliableMulticastListener(multiprocessing.Process):
             if r_vector_clock == n_vector_clock:
                 return True
         return False
+
+    def remove_old_recieved_messages(self):
+        self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
+        recieved_messages_copy = self.recieved_messages.copy()
+        self.recieved_messages.clear()
+        for entry in recieved_messages_copy:
+            n_filename, n_vector_clock, n_temp_filename, n_sender_id, n_message_type, n_original_sender_id = entry
+            for clock_key, clock_value in self.device_info_dynamic.PEER_vector_clock.items():
+                if util.get_or_default(n_vector_clock, clock_key) >= clock_value - 5:
+                    self.recieved_messages.append(entry)
+                    break
+
 
 

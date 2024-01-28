@@ -41,7 +41,6 @@ class OrderedMulticastListener(multiprocessing.Process):
                 #add to holdback
                 self.hold_back_queue.append(message)
 
-                #TODO sort hold back queue
                 self.hold_back_queue = sorted(self.hold_back_queue, key=cmp_to_key(self.compare_vector_clocks))
                 deliver_list = []
                 for entry in self.hold_back_queue.copy():#check if we actually can deliver the message or if we need to hold the changes back in the queue a bit longer
@@ -85,7 +84,7 @@ class OrderedMulticastListener(multiprocessing.Process):
 
         difference = 0
         for key, value in l_vector_clock.items():
-            difference = difference + util.get_or_default(r_vector_clock, key) - value
+            difference = difference + value - util.get_or_default(r_vector_clock, key)
 
         if difference < 0:
             return -1
