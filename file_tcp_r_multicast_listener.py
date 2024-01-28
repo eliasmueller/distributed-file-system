@@ -58,11 +58,11 @@ class ReliableMulticastListener(multiprocessing.Process):
             print("duplicate")
             return
         self.recieved_messages.append(message)
-        if self.device_info_static.PEER_ID != sender_id:
+        if self.device_info_static.PEER_ID != original_sender_id:
             #sender_id != my_id
             #b-multicast same message agean
             self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
-            bSend.basic_multicast_for_reliable_resent(device_info_static=self.device_info_static, original_sender_id=sender_id, device_info_dynamic=self.device_info_dynamic, vector_clock=vector_clock, message_type=message_type, file_location_name=temp_filename, file_name=filename)
+            bSend.basic_multicast_for_reliable_resent(device_info_static=self.device_info_static, original_sender_id=original_sender_id, device_info_dynamic=self.device_info_dynamic, vector_clock=vector_clock, message_type=message_type, file_location_name=temp_filename, file_name=filename)
         #reliable multicast deliver
         self.r_deliver_queue.put(message)
         self.remove_old_recieved_messages()
