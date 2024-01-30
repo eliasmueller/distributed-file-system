@@ -54,11 +54,11 @@ class BroadcastListener(multiprocessing.Process):
                     answer = message_processor.process_message(self.device_info_static, self.device_info_dynamic, data.decode(), self.shared_queue, self.shared_dict, self.lock)
                     if answer:
                         self.answer(addr, answer)
-                    if self.device_info_dynamic.LEADER_ID == self.device_info_static.PEER_ID:
-                        # if this peer is the leader let the new one know already
-                        self.answer(addr, formater.get_election_message(self.device_info_static, "leader", "init-no-election-id"))
-                        self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
-                        file_transfer.transfer_entire_folder(self.device_info_static, self.device_info_dynamic, addr[0])
+                        if self.device_info_dynamic.LEADER_ID == self.device_info_static.PEER_ID:
+                            # if this peer is the leader let the new one know already
+                            self.answer(addr, formater.get_election_message(self.device_info_static, "leader", "init-no-election-id"))
+                            self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
+                            file_transfer.transfer_entire_folder(self.device_info_static, self.device_info_dynamic, addr[0])
             except KeyboardInterrupt:
                 self.isRunning = False
 
