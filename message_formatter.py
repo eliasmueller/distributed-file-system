@@ -63,7 +63,7 @@ def get_original_sender_id(message: str) -> int:
     return int(message.split(',')[4].split(':')[1].strip())
 
 
-def get_sender_vector_clock(message: str) -> dict[int, int]:
+def get_sender_vector_clock(message: str) -> dict:
     if get_message_type(message) != "peer discovery":
         return dict()  # TODO
     message_dictionary = message.split("<SEPARATOR>")[1].split('{')[1].strip('}').strip().split(',')
