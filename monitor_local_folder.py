@@ -79,6 +79,7 @@ class FolderMonitor:
                     continue
             print(f"sending {f}")
             self.consistent_ordered_multicast_file_change(message_type, f)
+            time.sleep(0.15)
 
     def file_is_locked(self, filename: str):
         return filename in self.device_info_dynamic.LOCKED_FILES.keys()
