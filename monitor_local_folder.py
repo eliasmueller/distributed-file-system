@@ -35,12 +35,11 @@ class FolderMonitor:
         self.file_state = self.device_info_dynamic.PEER_file_state
         current_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
 
-        added_files = [f for f in current_state if f not in self.file_state]
+        # adding and modification is the same representation.
+        # added_files = [f for f in current_state if f not in self.file_state]
         deleted_files = [f for f in self.file_state if f not in current_state]
         modified_files = [f for f in current_state if current_state[f] != self.file_state.get(f, 0)]
 
-        if added_files:
-            self.notify_all_peers_about_file_change("add", added_files)
         if modified_files:
             self.notify_all_peers_about_file_change("modify", modified_files)
         if deleted_files:
@@ -75,7 +74,7 @@ class FolderMonitor:
             if f.startswith("tempversion_"):  # not deliver file changes start with "tempversion_" we do not want to send this.
                 continue
             if f.startswith("lock_"):  # to lock a file another file with same name and the prefix lock_ is created.
-                if message_type == "add":
+                if message_type == "modify":
                     self.lock_file(f)
                 elif message_type == "delete":
                     self.unlock_file(f.split("lock_")[1], discard=True)
