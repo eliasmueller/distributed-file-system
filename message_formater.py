@@ -40,15 +40,6 @@ def get_file_transfer_message(device_info_static: deviceInfo.DeviceInfoStatic, m
     return f'update, {message_type}, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, originalSenderID: {original_sender_id}, <SEPARATOR>{filename}<SEPARATOR>{vector_clock}<SEPARATOR>'
 
 
-def election_extractor(message_specification: str, message_sender_id: int, election_id: str, sender_ip: str,
-                       shared_queue: multiprocessing.Queue):
-    election_message = electionMessage.ElectionMessage(sender_id=message_sender_id,
-                                                       message_specification=message_specification,
-                                                       election_id=election_id,
-                                                       sender_ip=sender_ip)
-    util.produce_election_message(shared_queue, election_message)
-
-
 def is_leader(message: str) -> bool:
     return message.split(',')[0] == "election" and message.split(',')[1] == " leader"
 

@@ -1,7 +1,11 @@
 import ast
 import multiprocessing
+
+import electionMessage
 import message_formater
 from multiprocessing.managers import DictProxy
+
+import util
 from shared_dict_helper import DictKey
 import deviceInfo
 import shared_dict_helper
@@ -95,8 +99,8 @@ def election_extractor(message_payload: str,
                        message_sender_ip: str,
                        device_info_static: deviceInfo.DeviceInfoStatic,
                        shared_queue: multiprocessing.Queue):
-    election_id = message_payload
     sender_id = int(message_sender_id)
     if device_info_static.PEER_ID != sender_id:
-        message_formater.election_extractor(message_specification, sender_id, election_id, message_sender_ip,
-                                            shared_queue)
+        election_message = electionMessage.ElectionMessage(sender_id, message_specification, message_payload,
+                                                           message_sender_ip)
+        util.produce_election_message(shared_queue, election_message)
