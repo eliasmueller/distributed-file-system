@@ -55,10 +55,8 @@ class BullyAlgorithm(multiprocessing.Process):
     def run(self):
         while self.is_running:
             self.get_device_info_dynamic()
-            # If min. 2 members are there AND no leader yet trigger election.
-            if len(self.device_info_dynamic.PEERS) > 1:
-                if (not self.is_leader) & (not self.leader_id) & (not self.election_id):
-                    self.election()
+            if (not self.is_leader) & (not self.leader_id) & (not self.election_id):
+                self.election()
 
     def election(self):
         # Election ID is used to identify election messages and to show, this instance is currently running an election.
