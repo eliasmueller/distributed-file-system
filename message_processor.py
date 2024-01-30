@@ -72,6 +72,11 @@ def remove_extractor(message_payload: str,
         peers = ast.literal_eval(message_payload)
         dead_peers = peers
         for dead_id in dead_peers:
+            # Don't remove
+            if dead_id == device_info_static.PEER_ID:
+                print("leader removed this peer, starting a new election.")
+                shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.leader_id, None)
+                return
             device_info_dynamic.PEERS.remove(dead_id)
             del device_info_dynamic.PEER_IP_DICT[dead_id]
             if dead_id in device_info_dynamic.PEER_vector_clock.keys():
