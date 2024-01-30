@@ -74,7 +74,7 @@ def remove_extractor(message_payload: str,
         for dead_id in dead_peers:
             device_info_dynamic.PEERS.remove(dead_id)
             del device_info_dynamic.PEER_IP_DICT[dead_id]
-            if device_info_dynamic.PEER_vector_clock[dead_id]
+            if device_info_dynamic.PEER_vector_clock[dead_id]:
                 del device_info_dynamic.PEER_vector_clock[dead_id]
         print(f"Removing known peers as defined by leader. New group view: {device_info_dynamic.PEERS} ")
         device_info_dynamic.update_entire_shared_dict(shared_dict, lock)
