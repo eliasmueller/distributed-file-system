@@ -111,6 +111,8 @@ class Heartbeat:
                 data, addr = self.unicast_socket_sender.recvfrom(self.buffer_size)
             except socket.timeout:
                 return None
+            except ConnectionResetError:
+                return None
             if data:
                 return data.decode()
 
