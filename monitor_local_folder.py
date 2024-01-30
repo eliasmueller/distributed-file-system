@@ -20,7 +20,7 @@ class FolderMonitor:
         self.device_info_dynamic = device_info_dynamic
         self.shared_queue = shared_queue
         self.shared_dict = shared_dict
-        self.file_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
+        self.file_state = dict()
         self.is_running = True
         self.lock = lock
 

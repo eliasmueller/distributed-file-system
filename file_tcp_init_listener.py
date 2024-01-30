@@ -5,7 +5,8 @@ from multiprocessing.managers import DictProxy
 
 import deviceInfo
 import file_transfer
-
+import shared_dict_helper
+from shared_dict_helper import DictKey
 buffer_size = 4096
 
 
@@ -17,10 +18,10 @@ class FileInitListener(multiprocessing.Process):
                  lock):
         super(FileInitListener, self).__init__()
         self.device_info_static = device_info_static
-        self.device_info_dynamic = device_info_dynamic
         self.shared_dict = shared_dict
         self.isRunning = True
         self.lock = lock
+        self.file_state = dict()
         self.port = 7772
         # Create a TCP socket
         self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -44,3 +45,6 @@ class FileInitListener(multiprocessing.Process):
             filepath_temp = f"{self.device_info_static.MY_STORAGE}/{temp_filename}"
 
             os.replace(filepath_temp, filepath_file)
+
+            self.file_state.update({filepath_file: os.path.getmtime(os.path.join(self.device_info_static.MY_STORAGE, filepath_file))})
+            shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, self.file_state)
