@@ -1,7 +1,7 @@
 import os
 
 
-def ask_for_folder_path_to_synchronise() -> str | None:
+def ask_for_folder_path_to_synchronise() -> str:
     user_input = input("Enter the full path of a folder to synchronise: ")
     if os.path.exists(user_input):
         return str(user_input)

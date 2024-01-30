@@ -14,7 +14,7 @@ def basic_broadcast(ip, port, message: str):
     BROADCAST_SOCKET_SENDER.sendto(str.encode(message), (ip, port))
 
 
-def listen_for_broadcast_answer(timeout_seconds: int) -> str | None:
+def listen_for_broadcast_answer(timeout_seconds: int) -> str:
     BROADCAST_SOCKET_SENDER.settimeout(timeout_seconds)
     while True:
         try:
