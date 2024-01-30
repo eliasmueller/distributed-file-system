@@ -2,7 +2,7 @@ import multiprocessing
 import os
 import pickle
 
-import election_message as electionMessage
+import election_message
 
 
 def consume(shared_queue: multiprocessing.Queue):
@@ -12,8 +12,8 @@ def consume(shared_queue: multiprocessing.Queue):
     return complex_object
 
 
-def produce_election_message(shared_queue: multiprocessing.Queue, election_message: electionMessage.ElectionMessage):
-    serialized_object = pickle.dumps(election_message)
+def produce_election_message(shared_queue: multiprocessing.Queue, message: election_message.ElectionMessage):
+    serialized_object = pickle.dumps(message)
     shared_queue.put(serialized_object)
 
 
