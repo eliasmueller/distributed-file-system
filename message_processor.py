@@ -23,6 +23,8 @@ def process_message(device_info_static: device_info.DeviceInfoStatic,
     message_sender_id = message_split[3].split(':')[1].strip()
     message_payload = message_split[4].split(':')[1].strip()
 
+    device_info_dynamic.get_update_from_shared_dict(shared_dict)
+
     if message_type == 'request':
         return request_answerer(device_info_static, device_info_dynamic, message_specification)
     elif message_type == 'update':
