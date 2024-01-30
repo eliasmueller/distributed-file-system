@@ -19,38 +19,20 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic,
     message_sender_ip = message_split[2].split(':')[1].strip()
     message_sender_id = message_split[3].split(':')[1].strip()
     message_payload = message_split[4].split(':')[1].strip()
+
     if message_type == 'request':
         return request_answerer(device_info_static, device_info_dynamic, message_specification)
     elif message_type == 'response':
         return response_extractor(message_specification, message_payload)
     elif message_type == 'update':
-        peer_id = int(message_sender_id)
-        peers = shared_dict[DictKey.peers.value]
-        peer_ip_dict = shared_dict[DictKey.peer_ip_dict.value]
-        if peer_id not in peers:
-            peers.append(peer_id)
-            peer_ip_dict[peer_id] = message_sender_ip
-            shared_dict_helper.update_shared_dict(shared_dict, lock, shared_dict_helper.DictKey.peer_ip_dict, peer_ip_dict)
-            shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peers, peers)
-            print(f"Updating known peers: {peers}")
-        return 'ACK, update'
+        return update_extractor(message_sender_id, message_sender_ip, shared_dict, lock)
     # this message type is used by the leader to notify the group about dead peers
     elif message_type == 'remove':
-        if device_info_dynamic.LEADER_ID != device_info_static.PEER_ID:
-            peers = ast.literal_eval(message_payload)
-            dead_peers = peers
-            for dead_id in dead_peers:
-                device_info_dynamic.PEERS.remove(dead_id)
-                del device_info_dynamic.PEER_IP_DICT[dead_id]
-            print(f"Removing known peers as defined by leader. New group view: {device_info_dynamic.PEERS} ")
-            device_info_dynamic.update_entire_shared_dict(shared_dict, lock)
-    elif message_type == 'election':
-        election_id = message_payload
-        sender_id = int(message_sender_id)
-        if device_info_static.PEER_ID != sender_id:
-            message_formater.election_extractor(message_specification, sender_id, election_id, message_sender_ip, shared_queue)
+        remove_extractor(message_payload, device_info_dynamic, device_info_static, shared_dict, lock)
         pass
-    elif message_type == 'ACK':
+    elif message_type == 'election':
+        election_extractor(message_payload, message_sender_id, message_specification, message_sender_ip,
+                           device_info_static, shared_queue)
         pass
     else:
         pass
@@ -77,3 +59,44 @@ def response_extractor(message_specification: str, message_payload: str) -> str:
     else:
         pass
     return ''  # empty answer no further investigation needed
+
+
+def update_extractor(message_sender_id: str, message_sender_ip: str, shared_dict: DictProxy, lock) -> str:
+    peer_id = int(message_sender_id)
+    peers = shared_dict[DictKey.peers.value]
+    peer_ip_dict = shared_dict[DictKey.peer_ip_dict.value]
+    if peer_id not in peers:
+        peers.append(peer_id)
+        peer_ip_dict[peer_id] = message_sender_ip
+        shared_dict_helper.update_shared_dict(shared_dict, lock, shared_dict_helper.DictKey.peer_ip_dict, peer_ip_dict)
+        shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peers, peers)
+        print(f"Updating known peers: {peers}")
+    return 'ACK, update'
+
+
+def remove_extractor(message_payload: str,
+                     device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+                     device_info_static: deviceInfo.DeviceInfoStatic,
+                     shared_dict: DictProxy,
+                     lock):
+    if device_info_dynamic.LEADER_ID != device_info_static.PEER_ID:
+        peers = ast.literal_eval(message_payload)
+        dead_peers = peers
+        for dead_id in dead_peers:
+            device_info_dynamic.PEERS.remove(dead_id)
+            del device_info_dynamic.PEER_IP_DICT[dead_id]
+        print(f"Removing known peers as defined by leader. New group view: {device_info_dynamic.PEERS} ")
+        device_info_dynamic.update_entire_shared_dict(shared_dict, lock)
+
+
+def election_extractor(message_payload: str,
+                       message_sender_id: str,
+                       message_specification: str,
+                       message_sender_ip: str,
+                       device_info_static: deviceInfo.DeviceInfoStatic,
+                       shared_queue: multiprocessing.Queue):
+    election_id = message_payload
+    sender_id = int(message_sender_id)
+    if device_info_static.PEER_ID != sender_id:
+        message_formater.election_extractor(message_specification, sender_id, election_id, message_sender_ip,
+                                            shared_queue)
