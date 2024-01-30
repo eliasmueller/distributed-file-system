@@ -46,5 +46,5 @@ class FileInitListener(multiprocessing.Process):
 
             os.replace(filepath_temp, filepath_file)
 
-            self.file_state.update({filepath_file: os.path.getmtime(os.path.join(self.device_info_static.MY_STORAGE, filepath_file))})
+            self.file_state.update({filename: os.path.getmtime(filepath_file)})
             shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, self.file_state)
