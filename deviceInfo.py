@@ -22,7 +22,7 @@ class DeviceInfoStatic:
         self.MY_HOST = socket.gethostname()
         self.MY_IP = get_my_ip()
         self.LAN_BROADCAST_IP = get_broadcast_ip(self.MY_IP, 24)
-        self.LAN_BROADCAST_PORT = 5971
+        self.LAN_BROADCAST_PORT = 5972
 
     def print_info(self):
         print("Some general information:")

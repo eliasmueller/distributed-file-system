@@ -20,12 +20,9 @@ class FolderMonitor:
         self.device_info_dynamic = device_info_dynamic
         self.shared_queue = shared_queue
         self.shared_dict = shared_dict
-        self.file_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
+        self.file_state = dict()
         self.is_running = True
         self.lock = lock
-
-        self.device_info_dynamic.PEER_file_state = self.file_state
-        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, self.device_info_dynamic.PEER_file_state)
 
         self.run()
 
@@ -35,12 +32,10 @@ class FolderMonitor:
         self.file_state = self.device_info_dynamic.PEER_file_state
         current_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
 
-        added_files = [f for f in current_state if f not in self.file_state]
+        # adding and modification is the same representation.
         deleted_files = [f for f in self.file_state if f not in current_state]
         modified_files = [f for f in current_state if current_state[f] != self.file_state.get(f, 0)]
 
-        if added_files:
-            self.notify_all_peers_about_file_change("add", added_files)
         if modified_files:
             self.notify_all_peers_about_file_change("modify", modified_files)
         if deleted_files:
@@ -53,15 +48,14 @@ class FolderMonitor:
     def run(self):
         try:
             while self.is_running:
-                self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
                 self.check_folder_changes()
                 time.sleep(1)
         except KeyboardInterrupt:
             pass
 
     def consistent_ordered_multicast_file_change(self, message_type, f):
-        #this is the start of the sending process for a ordered multicast
-        #increase own vector clock entry
+        # this is the start of the sending process for a ordered multicast
+        # increase own vector clock entry
         self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
         self.device_info_dynamic.increase_vector_clock_entry(self.device_info_static.PEER_ID, 1)
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_vector_clock, self.device_info_dynamic.PEER_vector_clock)
@@ -75,7 +69,7 @@ class FolderMonitor:
             if f.startswith("tempversion_"):  # not deliver file changes start with "tempversion_" we do not want to send this.
                 continue
             if f.startswith("lock_"):  # to lock a file another file with same name and the prefix lock_ is created.
-                if message_type == "add":
+                if message_type == "modify":
                     self.lock_file(f)
                 elif message_type == "delete":
                     self.unlock_file(f.split("lock_")[1], discard=True)
@@ -85,6 +79,7 @@ class FolderMonitor:
                     continue
             print(f"sending {f}")
             self.consistent_ordered_multicast_file_change(message_type, f)
+            time.sleep(0.15)
 
     def file_is_locked(self, filename: str):
         return filename in self.device_info_dynamic.LOCKED_FILES.keys()

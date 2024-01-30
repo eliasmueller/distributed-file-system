@@ -3,6 +3,7 @@ import multiprocessing
 from multiprocessing.managers import DictProxy
 
 import bully_algorithm
+import file_tcp_init_listener
 import monitor_local_folder
 import discovery
 import deviceInfo as deviceInfo
@@ -22,6 +23,10 @@ def establish_listeners(device_info_static: deviceInfo.DeviceInfoStatic,
                         shared_dict: DictProxy,
                         lock):
     listeners = []
+
+    p_init_folder_listener = file_tcp_init_listener.FileInitListener(device_info_static, shared_dict, lock)
+    listeners.append(p_init_folder_listener)
+    p_init_folder_listener.start()
 
     p_broadcast_listen = bListen.BroadcastListener(device_info_static, device_info_dynamic, shared_queue, shared_dict, lock)
     listeners.append(p_broadcast_listen)
@@ -98,11 +103,11 @@ if __name__ == '__main__':
     p_discovery.start()
 
     p_bully = start_bully(device_info_static, device_info_dynamic, shared_queue, shared_device_info_dynamic, lock)
-    p_monitor = start_folder_monitor(device_info_static, device_info_dynamic, shared_queue, shared_device_info_dynamic, lock)
 
     heartbeat = start_heartbeat(device_info_static, shared_device_info_dynamic, lock, interval=5)
 
     p_discovery.join()
+    p_monitor = start_folder_monitor(device_info_static, device_info_dynamic, shared_queue, shared_device_info_dynamic, lock)
 
     # device_info_dynamic = shared_dict.get("device_info_dynamic")
     device_info_dynamic.get_update_from_shared_dict(shared_device_info_dynamic)

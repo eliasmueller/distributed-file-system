@@ -53,7 +53,7 @@ class FileListener(multiprocessing.Process):
                         print(f"Not applying received file changes because file is locked locally.")
                     else:
                         print(f"Received file changes")
-                        if message_type == " file transfer delete":
+                        if message_type == "delete":
                             util.delete_file(file_name, self.device_info_static.MY_STORAGE)
                             util.delete_file(temp_filename, self.device_info_static.MY_STORAGE)
                         else:

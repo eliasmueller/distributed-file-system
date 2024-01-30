@@ -116,6 +116,7 @@ class Heartbeat:
 
     def remove_dead_peers(self, dead_peer_ips: List[str]):
         dead_ids = []
+        vector_clock = self.shared_dict[DictKey.peer_vector_clock.value]
         peers = self.shared_dict[DictKey.peers.value]
         for ip in dead_peer_ips:
             for key, value in self.peer_ip_dict.items():
@@ -124,9 +125,12 @@ class Heartbeat:
         for dead_id in dead_ids:
             peers.remove(dead_id)
             del self.peer_ip_dict[dead_id]
+            if dead_id in vector_clock.keys():
+                del vector_clock[dead_id]
             print(f"Removing dead peer {dead_id} from group.")
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_ip_dict, self.peer_ip_dict)
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peers, peers)
+        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_vector_clock, vector_clock)
 
         message = message_formater.remove_peer_view(self.device_info_static, dead_ids)
 

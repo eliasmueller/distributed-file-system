@@ -1,9 +1,11 @@
 import socket
 import ast
 import os.path
+from multiprocessing.managers import DictProxy
 
 import deviceInfo
 import message_formater as formater
+import util
 
 buffer_size = 4096
 
@@ -24,7 +26,7 @@ def transfer_file(ip,
     if not os.path.isfile(filepath):
         message_type = "delete"
     tcp_socket_sender.send(str.encode(formater.get_file_transfer_message(device_info_static,message_type,filename,vector_clock,original_sender_id)))
-    print(f"Send file {filename} to {ip}.")
+    print(f"Send file {filename} to {ip} on port {port}.")
 
     if message_type == "delete":
         tcp_socket_sender.close()
@@ -51,7 +53,7 @@ def vector_clock_to_path_string(vector_clock: dict):
     vc_str = vc_str.replace(' ','')
     return vc_str
 
-def listen_for_file(listen_socket, device_info_static: deviceInfo.DeviceInfoStatic) -> (str, dict, str, int, str):
+def listen_for_file(listen_socket, device_info_static: deviceInfo.DeviceInfoStatic) -> (str, dict, str, int, str, int):
     listen_socket.listen()
     conn_socket, addr = listen_socket.accept()
     print(f"Received tcp connection handshake from {addr}")
@@ -85,4 +87,11 @@ def listen_for_file(listen_socket, device_info_static: deviceInfo.DeviceInfoStat
     conn_socket.close()
     #b-deliver
     return filename, vector_clock, temp_filename, formater.get_sender_id(received[0]), message_type, formater.get_original_sender_id(received[0])
+
+
+def transfer_entire_folder(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, ip):
+    folder_state = device_info_dynamic.PEER_file_state
+    for f in folder_state.keys():
+        # We use the current clock at this will be discarded anyhow in this initial message exchange
+        transfer_file(ip, 7772, device_info_static.PEER_ID, device_info_static, "file transfer modify", device_info_dynamic.PEER_vector_clock, f, f)
 
