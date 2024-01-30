@@ -3,6 +3,7 @@ import multiprocessing
 from multiprocessing.managers import DictProxy
 
 import message_formater as formater
+import message_processor
 import deviceInfo as deviceInfo
 
 buffer_size = 1024
@@ -49,7 +50,7 @@ class BroadcastListener(multiprocessing.Process):
                 data, addr = self.listen_socket.recvfrom(self.buffer_size)
                 if data:
                     #print(f"Received broadcast from {addr} with the message: {data.decode()}")
-                    answer = formater.process_message(self.device_info_static, self.device_info_dynamic, data.decode(), self.shared_queue, self.shared_dict, self.lock)
+                    answer = message_processor.process_message(self.device_info_static, self.device_info_dynamic, data.decode(), self.shared_queue, self.shared_dict, self.lock)
                     if answer:
                         self.answer(addr, answer)
                     if self.device_info_dynamic.LEADER_ID == self.device_info_static.PEER_ID:
