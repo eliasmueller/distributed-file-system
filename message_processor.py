@@ -26,10 +26,9 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic,
 
     if message_type == 'request':
         return request_answerer(device_info_static, device_info_dynamic, message_specification)
-    elif message_type == 'response':
-        return response_extractor(message_specification, message_payload)
     elif message_type == 'update':
-        return update_extractor(message_sender_id, message_sender_ip, shared_dict, lock)
+        update_extractor(message_sender_id, message_sender_ip, shared_dict, lock)
+        pass
     # this message type is used by the leader to notify the group about dead peers
     elif message_type == 'remove':
         remove_extractor(message_payload, device_info_dynamic, device_info_static, shared_dict, lock)
@@ -47,25 +46,12 @@ def request_answerer(device_info_static: deviceInfo.DeviceInfoStatic, device_inf
                      message_specification: str) -> str:
     if message_specification == ' peer discovery':
         return message_formater.response_discovery(device_info_static, device_info_dynamic)
-    # elif message_specification == 'ACK':
-    #    return f'response, ACK, senderIP: {device_info.MY_IP}, senderID: {device_info.PEER_ID}, senderView: {device_info.PEERS}'
     else:
         pass
     return ''  # to send no answer
 
 
-def response_extractor(message_specification: str, message_payload: str) -> str:
-    if message_specification == ' peer discovery':
-        # returns the array of peers as a string
-        return message_payload
-    # elif message_specification == 'ACK':
-    #    pass
-    else:
-        pass
-    return ''  # empty answer no further investigation needed
-
-
-def update_extractor(message_sender_id: str, message_sender_ip: str, shared_dict: DictProxy, lock) -> str:
+def update_extractor(message_sender_id: str, message_sender_ip: str, shared_dict: DictProxy, lock):
     peer_id = int(message_sender_id)
     peers = shared_dict[DictKey.peers.value]
     peer_ip_dict = shared_dict[DictKey.peer_ip_dict.value]
@@ -75,7 +61,6 @@ def update_extractor(message_sender_id: str, message_sender_ip: str, shared_dict
         shared_dict_helper.update_shared_dict(shared_dict, lock, shared_dict_helper.DictKey.peer_ip_dict, peer_ip_dict)
         shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peers, peers)
         print(f"Updating known peers: {peers}")
-    return 'ACK, update'
 
 
 def remove_extractor(message_payload: str,
