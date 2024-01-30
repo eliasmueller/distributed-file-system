@@ -26,7 +26,7 @@ def transfer_file(ip,
     if not os.path.isfile(filepath):
         message_type = "delete"
     tcp_socket_sender.send(str.encode(formater.get_file_transfer_message(device_info_static,message_type,filename,vector_clock,original_sender_id)))
-    print(f"Send file {filename} to {ip}.")
+    print(f"Send file {filename} to {ip} on port {port}.")
 
     if message_type == "delete":
         tcp_socket_sender.close()
