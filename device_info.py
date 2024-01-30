@@ -1,9 +1,10 @@
-import socket
 import ipaddress
+import socket
 import uuid
 
 import userIO
 import util
+
 
 def get_my_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -11,6 +12,7 @@ def get_my_ip():
     my_ip = s.getsockname()[0]
     s.close()
     return my_ip
+
 
 class DeviceInfoStatic:
     def __init__(self, my_peer_ID: int, my_storage: str):
@@ -40,9 +42,9 @@ class DeviceInfoDynamic:
         self.GROUPS = []
         self.IS_LEADER_IN_ONE_GROUP = False
         self.LEADER_ID: int | None = None
-        self.PEER_file_state = {}
+        self.PEER_file_state = dict()
         self.PEER_vector_clock = dict()
-        self.LOCKED_FILES = {}
+        self.LOCKED_FILES = dict()
 
     def print_info(self):
         print("Some dynamic information:")
@@ -59,15 +61,15 @@ class DeviceInfoDynamic:
         for key, value in extern_vector_clock.items():
             peer_clock_val = util.get_or_default(self.PEER_vector_clock, key)
             if value < peer_clock_val:
-                raise Exception # a disconnected peer should not have vector clocks that are further along than network peers
-            self.PEER_vector_clock.update({key : max(0, peer_clock_val, value)})
+                raise Exception  # a disconnected peer should not have vector clocks further along than network peers
+            self.PEER_vector_clock.update({key: max(0, peer_clock_val, value)})
 
     def delete_vector_clock_entry(self, peer):
         self.PEER_vector_clock.pop(peer, None)
 
     def increase_vector_clock_entry(self, peer, increment_size: int):
         peer_clock_val = util.get_or_default(self.PEER_vector_clock, peer)
-        self.PEER_vector_clock.update({peer : max(0, peer_clock_val, peer_clock_val + increment_size)})
+        self.PEER_vector_clock.update({peer: max(0, peer_clock_val, peer_clock_val + increment_size)})
 
     def get_update_from_shared_dict(self, shared_dict):
         self.PEERS = shared_dict['peers']
@@ -90,23 +92,27 @@ class DeviceInfoDynamic:
             shared_dict['peer_vector_clock'] = self.PEER_vector_clock
             shared_dict['locked_files'] = self.LOCKED_FILES
 
+
 def get_host_ip(host_name):
-    #self.MY_IP = socket.gethostbyname(host_name)
+    # self.MY_IP = socket.gethostbyname(host_name)
     ip = socket.gethostbyname_ex(host_name)
     print(ip)
-    return ip[2][len(ip[2])-1]
+    return ip[2][len(ip[2]) - 1]
+
 
 def get_network_ip(device_ip, mask):
     network = ipaddress.IPv4Network(f"{device_ip}/{mask}", strict=False)
     network_ip = str(network.network_address)
     return network_ip
 
+
 def get_broadcast_ip(device_ip, mask):
     network = ipaddress.IPv4Network(f"{device_ip}/{mask}", strict=False)
     network_ip = str(network.broadcast_address)
     return network_ip
 
-def initialise_myself(uuid_of_peer:int = uuid.uuid1().int, path: str = ""):
+
+def initialise_myself(uuid_of_peer: int = uuid.uuid1().int, path: str = ""):
     my_peer_id = uuid_of_peer
     my_storage = path
     if path == "":

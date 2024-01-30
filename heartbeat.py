@@ -1,20 +1,20 @@
+import socket
+import time
 from datetime import datetime
 from multiprocessing.managers import DictProxy
-import time
 from typing import List
-import socket
 
-import message_formater
-import sender as broadcast_send
-import deviceInfo
-import message_formater as formater
-from shared_dict_helper import DictKey
+import device_info
+import message_formatter
+import message_formatter as formatter
+import sender as b_send
 import shared_dict_helper
+from shared_dict_helper import DictKey
 
 
 class Heartbeat:
     def __init__(self,
-                 device_info_static: deviceInfo.DeviceInfoStatic,
+                 device_info_static: device_info.DeviceInfoStatic,
                  shared_dict: DictProxy,
                  lock,
                  interval=5):
@@ -23,7 +23,7 @@ class Heartbeat:
         self.interval = interval
         self.leader_id = None
         self.leader_ip = None
-        self.peer_ip_dict = {}
+        self.peer_ip_dict = dict()
         self.heartbeat_port = 42044
         self.unicast_socket_sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.unicast_socket_sender.bind((device_info_static.MY_IP, 42044))
@@ -34,7 +34,7 @@ class Heartbeat:
     def run(self):
         heartbeat_timeout_counter = 0
         while True:
-            time.sleep(5)
+            time.sleep(self.interval)
             self.get_device_info_update()
 
             if self.leader_ip is None:
@@ -54,7 +54,7 @@ class Heartbeat:
 
                 else:
                     print("Heartbeat answer received")
-                    sender_ip = formater.get_sender_ip(response)
+                    sender_ip = formatter.get_sender_ip(response)
                     if sender_ip != self.leader_ip:
                         raise Exception("Received heartbeat response from non leader. This is not allowed")
 
@@ -72,7 +72,7 @@ class Heartbeat:
             self.leader_ip = None
 
     def send_heartbeat_to_leader(self):
-        self.unicast_socket_sender.sendto(str.encode(formater.request_heartbeat_message(self.device_info_static)),
+        self.unicast_socket_sender.sendto(str.encode(formatter.request_heartbeat_message(self.device_info_static)),
                                           (self.leader_ip, self.heartbeat_port))
         print(f"Heartbeat sent to leader")
 
@@ -98,10 +98,11 @@ class Heartbeat:
             if response is None:
                 continue
             else:
-                sender_ip = formater.get_sender_ip(response)
+                sender_ip = formatter.get_sender_ip(response)
                 print(f"Received heartbeat message from {sender_ip}. Sending Response...")
-                self.unicast_socket_sender.sendto(str.encode(formater.response_heartbeat_message(self.device_info_static)),
-                                                  (sender_ip, self.heartbeat_port))
+                self.unicast_socket_sender.sendto(
+                    str.encode(formatter.response_heartbeat_message(self.device_info_static)),
+                    (sender_ip, self.heartbeat_port))
                 heartbeat_timestamps[sender_ip] = datetime.now()
 
     def wait_for_response(self, timeout_seconds: int):
@@ -134,8 +135,7 @@ class Heartbeat:
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peers, peers)
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_vector_clock, vector_clock)
 
-        message = message_formater.remove_peer_view(self.device_info_static, dead_ids)
+        message = message_formatter.remove_peer_view(self.device_info_static, dead_ids)
 
-        broadcast_send.basic_broadcast(self.device_info_static.LAN_BROADCAST_IP,
-                                       self.device_info_static.LAN_BROADCAST_PORT, str(message))
-
+        b_send.basic_broadcast(self.device_info_static.LAN_BROADCAST_IP,
+                               self.device_info_static.LAN_BROADCAST_PORT, str(message))

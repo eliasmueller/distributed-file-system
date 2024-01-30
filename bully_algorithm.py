@@ -1,24 +1,22 @@
-import multiprocessing
-from multiprocessing.managers import DictProxy
 import datetime
+import multiprocessing
 import time
 import uuid
+from multiprocessing.managers import DictProxy
 from typing import List
 
-import message_formater as formater
-import deviceInfo
-import electionMessage
-import sender as bSend
-from shared_dict_helper import DictKey
+import device_info
+import election_message
+import message_formatter as formatter
+import sender as b_send
 import shared_dict_helper
 import util
+from shared_dict_helper import DictKey
 
-import broadcast_listener as bListen
-import discovery
 
 class BullyAlgorithm(multiprocessing.Process):
-    def __init__(self, device_info_static: deviceInfo.DeviceInfoStatic,
-                 device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+    def __init__(self, device_info_static: device_info.DeviceInfoStatic,
+                 device_info_dynamic: device_info.DeviceInfoDynamic,
                  shared_queue: multiprocessing.Queue,
                  shared_dict: DictProxy,
                  lock):
@@ -44,8 +42,8 @@ class BullyAlgorithm(multiprocessing.Process):
         if not self.shared_queue.empty():
             queue_message = util.consume(self.shared_queue)
             self.handle_election_message(queue_message)
-    
-    def update_device_info_dynamic(self, message: electionMessage.ElectionMessage):
+
+    def update_device_info_dynamic(self, message: election_message.ElectionMessage):
         if message.SENDER_ID not in self.device_info_dynamic.PEERS:
             self.device_info_dynamic.PEERS.append(message.SENDER_ID)
         self.device_info_dynamic.PEER_IP_DICT[message.SENDER_ID] = message.SENDER_IP
@@ -100,7 +98,8 @@ class BullyAlgorithm(multiprocessing.Process):
     def wait_for_election_responses(self, peers_with_higher_peer_id: List[int]) -> str:
         now = datetime.datetime.now()
         if not peers_with_higher_peer_id:
-            timeout = now + datetime.timedelta(seconds=3)  # exit early if it is the highest peer, not 0 to ensure "leader" message arrives after "answer"
+            timeout = now + datetime.timedelta(
+                seconds=3)  # exit early if it is the highest peer, not 0 to ensure "leader" message arrives after "answer"
         else:
             timeout = now + datetime.timedelta(seconds=15)
 
@@ -138,34 +137,41 @@ class BullyAlgorithm(multiprocessing.Process):
             ip = self.device_info_dynamic.PEER_IP_DICT[recipient_id]
         else:
             ip = recipient_ip
-        message = formater.get_election_message(self.device_info_static, "inquiry", self.election_id)
-        bSend.basic_broadcast(ip=ip, port=self.device_info_static.LAN_BROADCAST_PORT, message=message)
+        message = formatter.get_election_message(self.device_info_static, "inquiry", self.election_id)
+        b_send.basic_broadcast(ip=ip, port=self.device_info_static.LAN_BROADCAST_PORT, message=message)
 
     def respond_to_election(self, requesting_peer_id: int, requesting_peer_ip: str, election_id: str):
-        print(f"Process {self.peer_id} receives election message from process {requesting_peer_id}, with election id {election_id}, answers ACK.")
-        message = formater.get_election_message(self.device_info_static, "answer", election_id)
-        bSend.basic_broadcast(ip=requesting_peer_ip, port=self.device_info_static.LAN_BROADCAST_PORT, message=message)
+        print(f"Process {self.peer_id} receives election message from process {requesting_peer_id}, "
+              f"with election id {election_id}, answers ACK.")
+        message = formatter.get_election_message(self.device_info_static, "answer", election_id)
+        b_send.basic_broadcast(ip=requesting_peer_ip, port=self.device_info_static.LAN_BROADCAST_PORT, message=message)
 
     def send_election_leader(self):
-        message = formater.get_election_message(self.device_info_static, "leader", self.election_id)
-        bSend.basic_broadcast(self.device_info_static.LAN_BROADCAST_IP, self.device_info_static.LAN_BROADCAST_PORT,
-                              message)
+        message = formatter.get_election_message(self.device_info_static, "leader", self.election_id)
+        b_send.basic_broadcast(self.device_info_static.LAN_BROADCAST_IP, self.device_info_static.LAN_BROADCAST_PORT,
+                               message)
 
-    def handle_election_message(self, message: electionMessage.ElectionMessage):
+    def handle_election_message(self, message: election_message.ElectionMessage):
         self.leader_id = None
         self.is_leader = False
         # this is always from a lower process:
         if message.MESSAGE_SPECIFICATION == " inquiry":
             self.respond_to_election(message.SENDER_ID, message.SENDER_IP, message.ELECTION_ID)
             if self.election_id:
-                print(f"Process {self.peer_id} received inquiry from lower process {message.SENDER_ID}. {self.peer_id} has already an election ongoing, will abort it and start new one. Old election ID: {self.election_id}")
+                print(f"Process {self.peer_id} received inquiry from lower process {message.SENDER_ID}. {self.peer_id}"
+                      f" has already an election ongoing, will abort it and start new one."
+                      f" Old election ID: {self.election_id}")
                 self.received_lower_election_inquiry.append(message.SENDER_ID)
             else:
-                print(f"Process {self.peer_id} received inquiry from lower process {message.SENDER_ID}. Starting new election.")
+                print(
+                    f"Process {self.peer_id} received inquiry from lower process {message.SENDER_ID}. "
+                    f"Starting new election.")
 
-        # Only handle answers for the own election, also only possible from higher processes, as only those receive inquiry:
+        # Only handle answers for own election, also only possible from higher processes, as only those receive inquiry:
         elif (message.MESSAGE_SPECIFICATION == " answer") & (self.election_id == message.ELECTION_ID):
-            print(f"Process {self.peer_id} received answer from higher process {message.SENDER_ID}. Aborting possible own elections.")
+            print(
+                f"Process {self.peer_id} received answer from higher process {message.SENDER_ID}. "
+                f"Aborting possible own elections.")
             self.leader_id = None
             self.is_leader = False
             self.received_higher_election_inquiry.append(message.SENDER_ID)
@@ -176,14 +182,20 @@ class BullyAlgorithm(multiprocessing.Process):
                 self.is_leader = False
                 if self.election_id:
                     print(
-                        f"Process {self.peer_id} received leader from lower process {message.SENDER_ID}. {self.peer_id} has already an election ongoing, will abort it and start new one. Old election ID: {self.election_id}.")
+                        f"Process {self.peer_id} received leader from lower process {message.SENDER_ID}. {self.peer_id}"
+                        f" has already an election ongoing, will abort it and start new one."
+                        f" Old election ID: {self.election_id}.")
                     self.received_lower_election_inquiry.append(message.SENDER_ID)
                 else:
-                    print(f"Process {self.peer_id} received leader from lower process {message.SENDER_ID}. Starting new election.")
+                    print(
+                        f"Process {self.peer_id} received leader from lower process {message.SENDER_ID}. "
+                        f"Starting new election.")
             elif message.SENDER_ID > self.peer_id:
-                print(f"Process {self.peer_id} received leader message from higher process {message.SENDER_ID}. Accepting him.")
+                print(
+                    f"Process {self.peer_id} received leader message from higher process {message.SENDER_ID}. "
+                    f"Accepting him.")
                 self.received_higher_election_inquiry.append(message.SENDER_ID)
                 self.is_leader = False
                 self.leader_id = message.SENDER_ID
-                
+
         self.update_device_info_dynamic(message)

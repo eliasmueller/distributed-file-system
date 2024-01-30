@@ -1,14 +1,7 @@
 import os
 
-def ask_for_unique_ID() -> int:
-    while True:
-        user_input = input("Enter the unique ID of this peer: ")
-        if user_input.isdigit():
-            return int(user_input)
-        else:
-            print("Invalid input. Please enter a valid integer.")
 
-def ask_for_folder_path_to_synchronise() -> str:
+def ask_for_folder_path_to_synchronise() -> str | None:
     user_input = input("Enter the full path of a folder to synchronise: ")
     if os.path.exists(user_input):
         return str(user_input)
