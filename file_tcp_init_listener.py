@@ -3,16 +3,17 @@ import os
 import socket
 from multiprocessing.managers import DictProxy
 
-import deviceInfo
+import device_info
 import file_transfer
 import shared_dict_helper
 from shared_dict_helper import DictKey
-buffer_size = 4096
+
+BUFFER_SIZE = 4096
 
 
 class FileInitListener(multiprocessing.Process):
     def __init__(self,
-                 device_info_static: deviceInfo.DeviceInfoStatic,
+                 device_info_static: device_info.DeviceInfoStatic,
                  shared_dict: DictProxy,
                  lock):
         super(FileInitListener, self).__init__()
@@ -25,7 +26,7 @@ class FileInitListener(multiprocessing.Process):
         # Create a TCP socket
         self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.listen_socket.bind((self.device_info_static.MY_IP, self.port))
-        self.buffer_size = buffer_size
+        self.buffer_size = BUFFER_SIZE
 
     def run(self):
         print("Listening for initial folder structure from leader on port 7772")
@@ -38,8 +39,8 @@ class FileInitListener(multiprocessing.Process):
     def file_init_listener(self):
         # TODO self destruct after 10s
         while self.isRunning:
-            filename, vector_clock, temp_filename, sender_id, message_type, orig_sender_id = file_transfer.listen_for_file(
-                self.listen_socket, self.device_info_static)
+            filename, vector_clock, temp_filename, sender_id, message_type, orig_sender_id = (
+                file_transfer.listen_for_file(self.listen_socket, self.device_info_static))
             filepath_file = f"{self.device_info_static.MY_STORAGE}/{filename}"
             filepath_temp = f"{self.device_info_static.MY_STORAGE}/{temp_filename}"
 

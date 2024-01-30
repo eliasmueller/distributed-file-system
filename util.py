@@ -1,9 +1,8 @@
-import pickle
-import os
-
 import multiprocessing
-import deviceInfo as deviceInfo
-import electionMessage as electionMessage
+import os
+import pickle
+
+import election_message
 
 
 def consume(shared_queue: multiprocessing.Queue):
@@ -13,12 +12,12 @@ def consume(shared_queue: multiprocessing.Queue):
     return complex_object
 
 
-def produce_election_message(shared_queue: multiprocessing.Queue, election_message: electionMessage.ElectionMessage):
-    serialized_object = pickle.dumps(election_message)
+def produce_election_message(shared_queue: multiprocessing.Queue, message: election_message.ElectionMessage):
+    serialized_object = pickle.dumps(message)
     shared_queue.put(serialized_object)
 
 
-def get_or_default(dictionary: dict() , key) -> int:
+def get_or_default(dictionary: dict(), key) -> int:
     value = 0
     if key in dictionary:
         value = dictionary.get(key)
@@ -31,6 +30,6 @@ def get_folder_state(storage_path: str):
 
 
 def delete_file(filename: str, storage_path: str):
-    filepath_file = f"{storage_path}/{filename}"   
+    filepath_file = f"{storage_path}/{filename}"
     if os.path.exists(filepath_file):
         os.remove(filepath_file)

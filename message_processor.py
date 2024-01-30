@@ -1,18 +1,17 @@
 import ast
 import multiprocessing
-
-import electionMessage
-import message_formater
 from multiprocessing.managers import DictProxy
 
+import device_info
+import message_formatter
+import election_message
+import shared_dict_helper
 import util
 from shared_dict_helper import DictKey
-import deviceInfo
-import shared_dict_helper
 
 
-def process_message(device_info_static: deviceInfo.DeviceInfoStatic,
-                    device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+def process_message(device_info_static: device_info.DeviceInfoStatic,
+                    device_info_dynamic: device_info.DeviceInfoDynamic,
                     message: str,
                     shared_queue: multiprocessing.Queue,
                     shared_dict: DictProxy,
@@ -42,10 +41,10 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic,
     return ''
 
 
-def request_answerer(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+def request_answerer(device_info_static: device_info.DeviceInfoStatic, device_info_dynamic: device_info.DeviceInfoDynamic,
                      message_specification: str) -> str:
     if message_specification == ' peer discovery':
-        return message_formater.response_discovery(device_info_static, device_info_dynamic)
+        return message_formatter.response_discovery(device_info_static, device_info_dynamic)
     else:
         pass
     return ''  # to send no answer
@@ -64,8 +63,8 @@ def update_extractor(message_sender_id: str, message_sender_ip: str, shared_dict
 
 
 def remove_extractor(message_payload: str,
-                     device_info_dynamic: deviceInfo.DeviceInfoDynamic,
-                     device_info_static: deviceInfo.DeviceInfoStatic,
+                     device_info_dynamic: device_info.DeviceInfoDynamic,
+                     device_info_static: device_info.DeviceInfoStatic,
                      shared_dict: DictProxy,
                      lock):
     if device_info_dynamic.LEADER_ID != device_info_static.PEER_ID:
@@ -89,10 +88,10 @@ def election_extractor(message_payload: str,
                        message_sender_id: str,
                        message_specification: str,
                        message_sender_ip: str,
-                       device_info_static: deviceInfo.DeviceInfoStatic,
+                       device_info_static: device_info.DeviceInfoStatic,
                        shared_queue: multiprocessing.Queue):
     sender_id = int(message_sender_id)
     if device_info_static.PEER_ID != sender_id:
-        election_message = electionMessage.ElectionMessage(sender_id, message_specification, message_payload,
-                                                           message_sender_ip)
-        util.produce_election_message(shared_queue, election_message)
+        message = election_message.ElectionMessage(
+            sender_id, message_specification, message_payload, message_sender_ip)
+        util.produce_election_message(shared_queue, message)

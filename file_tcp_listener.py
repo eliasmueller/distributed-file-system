@@ -1,22 +1,19 @@
-import socket
 import multiprocessing
-from multiprocessing.managers import DictProxy
 import os
-import time
+from multiprocessing.managers import DictProxy
 
-import file_transfer
-import deviceInfo as deviceInfo
-from shared_dict_helper import DictKey
+import device_info
 import shared_dict_helper
 import util
+from shared_dict_helper import DictKey
 
-buffer_size = 4096
+BUFFER_SIZE = 4096
 
 
 class FileListener(multiprocessing.Process):
     def __init__(self,
-                 device_info_static: deviceInfo.DeviceInfoStatic,
-                 device_info_dynamic: deviceInfo.DeviceInfoDynamic,
+                 device_info_static: device_info.DeviceInfoStatic,
+                 device_info_dynamic: device_info.DeviceInfoDynamic,
                  deliver_queue: multiprocessing.Queue,
                  shared_dict: DictProxy,
                  lock):
@@ -43,9 +40,9 @@ class FileListener(multiprocessing.Process):
                     for (file_name, temp_filename, message_type) in self.hold_back_locked_files:
                         if not self.check_locked_file(file_name):
                             self.update_file_from_tempfile(file_name, temp_filename, message_type)
-                #recieve ordered reliable multicast delivery
+                # receive ordered reliable multicast delivery
                 (file_name, temp_filename, message_type) = self.o_deliver_queue.get()
-                #application has message
+                # application has message
                 if temp_filename:
                     self.update_device_info_dynamic()
                     if self.check_locked_file(file_name):
@@ -60,26 +57,26 @@ class FileListener(multiprocessing.Process):
                             self.update_file_from_tempfile(file_name, temp_filename, self.device_info_static.MY_STORAGE)
                         self.update_device_info_dynamic()
 
-
             except KeyboardInterrupt:
                 self.isRunning = False
             except Exception:
                 continue
 
     def update_file_from_tempfile(self, filename: str, temp_filename: str, storage_path: str):
-        #override file
+        # override file
         filepath_file = f"{storage_path}/{filename}"
         filepath_temp = f"{storage_path}/{temp_filename}"
 
         os.replace(filepath_temp, filepath_file)
 
     def update_device_info_dynamic(self):
-        #update monitor last file change view
+        # update monitor last file change view
         self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
-        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, util.get_folder_state(self.device_info_static.MY_STORAGE))
+        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state,
+                                              util.get_folder_state(self.device_info_static.MY_STORAGE))
 
     def check_locked_file(self, filename) -> bool:
-        # If a file is locked we keep everything in the hold back queue until unlocked again to ensure consistency and mark the file as remote edited
+        # If a file is locked we keep everything in the hold back queue until unlocked again to ensure consistency
         if filename in self.device_info_dynamic.LOCKED_FILES.keys():
             print(f"Received change for locked file {filename}, holding it back in the queue.")
             self.device_info_dynamic.LOCKED_FILES[filename] = "remote"
