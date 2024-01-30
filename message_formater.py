@@ -1,9 +1,5 @@
-import multiprocessing
 from typing import List
 import deviceInfo as deviceInfo
-import electionMessage as electionMessage
-import util
-
 
 def request_discovery(device_info_static: deviceInfo.DeviceInfoStatic,
                       device_info_dynamic: deviceInfo.DeviceInfoDynamic) -> str:
