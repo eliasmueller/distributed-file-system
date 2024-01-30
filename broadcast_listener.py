@@ -10,7 +10,7 @@ static_broadcast_ip = "0.0.0.0"
 
 
 class BroadcastListener(multiprocessing.Process):
-    def __init__(self, 
+    def __init__(self,
                  device_info_static: deviceInfo.DeviceInfoStatic,
                  device_info_dynamic: deviceInfo.DeviceInfoDynamic,
                  shared_queue: multiprocessing.Queue,
@@ -28,7 +28,6 @@ class BroadcastListener(multiprocessing.Process):
         self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # Bind socket to address and port
-        # TODO check why the device's IP is not working and the static broadcast IP has to be used for broadcasting
         self.listen_socket.bind((static_broadcast_ip, self.device_info_static.LAN_BROADCAST_PORT))
         # self.listen_socket.bind((self.device_info_static.MY_IP, self.device_info_static.LAN_BROADCAST_PORT))
         self.buffer_size = buffer_size
@@ -57,7 +56,6 @@ class BroadcastListener(multiprocessing.Process):
                         # if this peer is the leader let the new one know already
                         self.answer(addr, formater.get_election_message(self.device_info_static, "leader", "init-no-election-id"))
             except KeyboardInterrupt:
-                # TODO dose not work yet
                 self.isRunning = False
 
     def answer(self, sender_address, message: str):

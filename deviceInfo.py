@@ -62,6 +62,9 @@ class DeviceInfoDynamic:
                 raise Exception # a disconnected peer should not have vector clocks that are further along than network peers
             self.PEER_vector_clock.update({key : max(0, peer_clock_val, value)})
 
+    def delete_vector_clock_entry(self, peer):
+        self.PEER_vector_clock.pop(peer, None)
+
     def increase_vector_clock_entry(self, peer, increment_size: int):
         peer_clock_val = util.get_or_default(self.PEER_vector_clock, peer)
         self.PEER_vector_clock.update({peer : max(0, peer_clock_val, peer_clock_val + increment_size)})
@@ -74,6 +77,7 @@ class DeviceInfoDynamic:
         self.LEADER_ID = shared_dict['leader_id']
         self.PEER_file_state = shared_dict['peer_file_state']
         self.PEER_vector_clock = shared_dict['peer_vector_clock']
+        self.LOCKED_FILES = shared_dict['locked_files']
 
     def update_entire_shared_dict(self, shared_dict, lock):
         with lock:
@@ -84,10 +88,10 @@ class DeviceInfoDynamic:
             shared_dict['leader_id'] = self.LEADER_ID
             shared_dict['peer_file_state'] = self.PEER_file_state
             shared_dict['peer_vector_clock'] = self.PEER_vector_clock
+            shared_dict['locked_files'] = self.LOCKED_FILES
 
 def get_host_ip(host_name):
     #self.MY_IP = socket.gethostbyname(host_name)
-    #TODO if the peer has more than one ip address find the right one
     ip = socket.gethostbyname_ex(host_name)
     print(ip)
     return ip[2][len(ip[2])-1]

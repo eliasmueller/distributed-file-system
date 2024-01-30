@@ -23,10 +23,13 @@ class FolderMonitor:
         self.file_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
         self.is_running = True
         self.lock = lock
+
+        self.device_info_dynamic.PEER_file_state = self.file_state
+        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, self.device_info_dynamic.PEER_file_state)
+
         self.run()
 
     def check_folder_changes(self):
-        # TODO supervise that changes triggered by remote updates are ignored
         assert self.device_info_dynamic is not None
         self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
         self.file_state = self.device_info_dynamic.PEER_file_state
@@ -48,7 +51,6 @@ class FolderMonitor:
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, self.file_state)
 
     def run(self):
-        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, self.file_state)
         try:
             while self.is_running:
                 self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
@@ -58,12 +60,12 @@ class FolderMonitor:
             pass
 
     def consistent_ordered_multicast_file_change(self, message_type, f):
+        #this is the start of the sending process for a ordered multicast
         #increase own vector clock entry
         self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
         self.device_info_dynamic.increase_vector_clock_entry(self.device_info_static.PEER_ID, 1)
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_vector_clock, self.device_info_dynamic.PEER_vector_clock)
-        # TODO instead of (iterating over peers tcp) B multicast use (tcp) R multicast
-        bSend.basic_multicast(self.device_info_static, self.device_info_dynamic, message_type, f)
+        bSend.reliable_multicast(self.device_info_static, self.device_info_dynamic, message_type, f)
 
     def notify_all_peers_about_file_change(self, message_type, files):
         print(f"Change detected: {message_type}, {files}")
@@ -93,7 +95,7 @@ class FolderMonitor:
         if os.path.exists(filepath):
             print(f"Locking file {file} locally.")
             self.device_info_dynamic.LOCKED_FILES[file] = "none"
-            self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
+            shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.locked_files, self.device_info_dynamic.LOCKED_FILES)
         else:
             os.remove(f"{self.device_info_static.MY_STORAGE}/{filename}")
 

@@ -1,5 +1,8 @@
 from enum import Enum
 
+import deviceInfo
+
+
 class DictKey(Enum):
     peers = "peers"
     peer_ip_dict = "peer_ip_dict"
@@ -8,12 +11,13 @@ class DictKey(Enum):
     leader_id = "leader_id"
     peer_file_state = "peer_file_state"
     peer_vector_clock = "peer_vector_clock"
+    locked_files = "locked_files"
 
 def update_shared_dict(shared_dict, lock, key: DictKey, value):
     with lock:
         shared_dict[key.value] = value
 
-def initialise_shared_dict(shared_dict, lock, device_info_dynamic):
+def initialise_shared_dict(shared_dict, lock, device_info_dynamic: deviceInfo.DeviceInfoDynamic):
     with lock:
         shared_dict['peers'] = device_info_dynamic.PEERS
         shared_dict['peer_ip_dict'] = device_info_dynamic.PEER_IP_DICT
@@ -22,3 +26,4 @@ def initialise_shared_dict(shared_dict, lock, device_info_dynamic):
         shared_dict['leader_id'] = device_info_dynamic.LEADER_ID
         shared_dict['peer_file_state'] = device_info_dynamic.PEER_file_state
         shared_dict['peer_vector_clock'] = device_info_dynamic.PEER_vector_clock
+        shared_dict['locked_files'] = device_info_dynamic.LOCKED_FILES

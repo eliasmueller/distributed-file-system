@@ -43,8 +43,8 @@ def response_heartbeat_message(device_info_static: deviceInfo.DeviceInfoStatic) 
     return f'response, heartbeat, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}'
 
 
-def get_file_transfer_message(device_info_static: deviceInfo.DeviceInfoStatic, message_type: str, filename: str, vector_clock: dict) -> str:
-    return f'update, file transfer {message_type}, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, <SEPARATOR>{filename}<SEPARATOR>{vector_clock}<SEPARATOR>'
+def get_file_transfer_message(device_info_static: deviceInfo.DeviceInfoStatic, message_type: str, filename: str, vector_clock: dict, original_sender_id: int) -> str:
+    return f'update, {message_type}, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, originalSenderID: {original_sender_id}, <SEPARATOR>{filename}<SEPARATOR>{vector_clock}<SEPARATOR>'
 
 
 # answer extractor
@@ -72,9 +72,9 @@ def process_message(device_info_static: deviceInfo.DeviceInfoStatic,
         if peer_id not in peers:
             peers.append(peer_id)
             peer_ip_dict[peer_id] = message_sender_ip
-            print(f"Updating known peers: {device_info_dynamic.PEERS}")
             shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peer_ip_dict, peer_ip_dict)
             shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peers, peers)
+            print(f"Updating known peers: {peers}")
         return 'ACK, update'
     # this message type is used by the leader to notify the group about dead peers
     elif message_type == 'remove':
@@ -139,7 +139,7 @@ def is_response(message: str) -> bool:
 
 
 def get_message_type(message: str) -> str:
-    return message.split(',')[1]
+    return message.split(',')[1].lstrip()
 
 
 def get_sender_ip(message: str) -> str:
@@ -150,9 +150,15 @@ def get_sender_id(message: str) -> int:
     return int(message.split(',')[3].split(':')[1].strip())
 
 
+def get_original_sender_id(message: str) -> int:
+    #if "file transfer" in get_message_type(message):
+    #    raise Exception
+    return int(message.split(',')[4].split(':')[1].strip())
+
+
 def get_sender_vector_clock(message: str) -> dict():
-    if get_message_type(message) != " peer discovery":
-        return ""
+    if get_message_type(message) != "peer discovery":
+        return ""#TODO
     message_dictionary = message.split("<SEPARATOR>")[1].split('{')[1].strip('}').strip().split(',')
     dictionary = dict()
     for entry in message_dictionary:

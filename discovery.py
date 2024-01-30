@@ -9,12 +9,14 @@ import sender as bSend
 import message_formater as formater
 import util
 
+
 def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic,
                    device_info_dynamic: deviceInfo.DeviceInfoDynamic,
                    shared_dict: DictProxy,
                    lock):
     # discover peers
     print("start a discovery")
+    device_info_dynamic.get_update_from_shared_dict(shared_dict)
     message = formater.request_discovery(device_info_static, device_info_dynamic)
     bSend.basic_broadcast(device_info_static.LAN_BROADCAST_IP, device_info_static.LAN_BROADCAST_PORT, str(message))
     answers = []
@@ -32,13 +34,13 @@ def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic,
     if leader_id:
         device_info_dynamic.LEADER_ID = leader_id
 
+    device_info_dynamic.update_entire_shared_dict(shared_dict, lock)
     # broadcast collected group view to update als views of other peers
     message = formater.update_peer_view(device_info_static, device_info_dynamic)
     bSend.basic_broadcast(device_info_static.LAN_BROADCAST_IP, device_info_static.LAN_BROADCAST_PORT, str(message))
-    device_info_dynamic.update_entire_shared_dict(shared_dict, lock)
+
 
 def interpret_discovery_answers(device_info_static: deviceInfo.DeviceInfoStatic, answers: List[str]):
-    # TODO resolve if not all answers are similar
     new_peer_view = {}
     new_vector_clock = dict()
     leader_id = None
@@ -48,11 +50,10 @@ def interpret_discovery_answers(device_info_static: deviceInfo.DeviceInfoStatic,
             leader_id = sender_id
         elif formater.is_response(answer):
             new_peer_view[sender_id] = formater.get_sender_ip(answer)
-            # answer_peer_view = formater.process_message()
-            # new_peer_view = ast.literal_eval(answer_peer_view)
-        new_vector_clock.update({sender_id : util.get_or_default(formater.get_sender_vector_clock(answer), str(sender_id))})
-        #TODO if other peers know the uuid of this peer with a vector clock > 0 we runn in a loop > discovery message resets vector clock of new id?
+            new_vector_clock.update(
+                {sender_id: util.get_or_default(formater.get_sender_vector_clock(answer), sender_id)})
+            new_vector_clock.update({device_info_static.PEER_ID: util.get_or_default(
+                formater.get_sender_vector_clock(answer), device_info_static.PEER_ID)})
     if device_info_static.PEER_ID not in new_peer_view:
-        # TODO if two times in list then network duplicates or ID already used
         new_peer_view[device_info_static.PEER_ID] = device_info_static.MY_IP
     return new_peer_view, leader_id, new_vector_clock

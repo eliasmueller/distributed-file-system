@@ -34,12 +34,19 @@ def basic_multicast(device_info_static: deviceInfo.DeviceInfoStatic,
     for p in device_info_dynamic.PEERS:
         if p != device_info_static.PEER_ID:
             ip = device_info_dynamic.PEER_IP_DICT[p]
-            file_transfer.transfer_file(ip=ip,
-                                        port=7771,
-                                        device_info_static=device_info_static,
-                                        message_type=message_type,
-                                        vector_clock=device_info_dynamic.PEER_vector_clock,
-                                        filename=file_name)
+            file_transfer.transfer_file(ip=ip, port=7771, original_sender_id=device_info_static.PEER_ID, device_info_static=device_info_static, message_type="file transfer "+message_type, vector_clock=device_info_dynamic.PEER_vector_clock, file_location_name=file_name, filename=file_name)
 
-#def reliable_multicast(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, file_name: str):
+def basic_multicast_for_reliable_resent(device_info_static: deviceInfo.DeviceInfoStatic, original_sender_id: int, device_info_dynamic: deviceInfo.DeviceInfoDynamic, vector_clock: dict , message_type, file_location_name: str, file_name: str):
+    for p in device_info_dynamic.PEERS:
+        if p == device_info_static.PEER_ID:
+            continue
+        if p == original_sender_id:
+            continue
+        ip = device_info_dynamic.PEER_IP_DICT[p]
+        file_transfer.transfer_file(ip=ip, port=7771, original_sender_id=original_sender_id, device_info_static=device_info_static, message_type=message_type, vector_clock=vector_clock, file_location_name=file_location_name, filename=file_name)
+
+def reliable_multicast(device_info_static: deviceInfo.DeviceInfoStatic, device_info_dynamic: deviceInfo.DeviceInfoDynamic, message_type, file_name: str):
+     basic_multicast(device_info_static, device_info_dynamic, message_type, file_name)
+     #The sending of reliable multicast is the same.
+     #Just adding this to ceep sending and recieving levels consistent.
 

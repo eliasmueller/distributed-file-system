@@ -56,7 +56,6 @@ class BullyAlgorithm(multiprocessing.Process):
         while self.is_running:
             self.get_device_info_dynamic()
             # If min. 2 members are there AND no leader yet trigger election.
-            # TODO clarify with the others, if the dynamic device info should only be updated after inital discovery when leader says so?
             if len(self.device_info_dynamic.PEERS) > 1:
                 if (not self.is_leader) & (not self.leader_id) & (not self.election_id):
                     self.election()
