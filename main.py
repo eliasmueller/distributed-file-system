@@ -24,7 +24,7 @@ def establish_listeners(device_info_static: deviceInfo.DeviceInfoStatic,
                         lock):
     listeners = []
 
-    p_init_folder_listener = file_tcp_init_listener.FileInitListener(device_info_static, device_info_dynamic, shared_dict, lock)
+    p_init_folder_listener = file_tcp_init_listener.FileInitListener(device_info_static, shared_dict, lock)
     listeners.append(p_init_folder_listener)
     p_init_folder_listener.start()
 

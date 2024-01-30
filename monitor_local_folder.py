@@ -24,9 +24,6 @@ class FolderMonitor:
         self.is_running = True
         self.lock = lock
 
-        self.device_info_dynamic.PEER_file_state = self.file_state
-        shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, self.device_info_dynamic.PEER_file_state)
-
         self.run()
 
     def check_folder_changes(self):
@@ -36,7 +33,6 @@ class FolderMonitor:
         current_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
 
         # adding and modification is the same representation.
-        # added_files = [f for f in current_state if f not in self.file_state]
         deleted_files = [f for f in self.file_state if f not in current_state]
         modified_files = [f for f in current_state if current_state[f] != self.file_state.get(f, 0)]
 
@@ -52,15 +48,14 @@ class FolderMonitor:
     def run(self):
         try:
             while self.is_running:
-                self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
                 self.check_folder_changes()
                 time.sleep(1)
         except KeyboardInterrupt:
             pass
 
     def consistent_ordered_multicast_file_change(self, message_type, f):
-        #this is the start of the sending process for a ordered multicast
-        #increase own vector clock entry
+        # this is the start of the sending process for a ordered multicast
+        # increase own vector clock entry
         self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
         self.device_info_dynamic.increase_vector_clock_entry(self.device_info_static.PEER_ID, 1)
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_vector_clock, self.device_info_dynamic.PEER_vector_clock)

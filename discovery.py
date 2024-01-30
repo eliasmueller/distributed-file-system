@@ -29,6 +29,7 @@ def discover_peers(device_info_static: deviceInfo.DeviceInfoStatic,
 
     # update group view
     new_peer_view, leader_id, new_vector_clock = interpret_discovery_answers(device_info_static, answers)
+    device_info_dynamic.get_update_from_shared_dict(shared_dict)
     device_info_dynamic.update_peer_view(new_peer_view)
     device_info_dynamic.update_vector_clock(new_vector_clock)
     if leader_id:

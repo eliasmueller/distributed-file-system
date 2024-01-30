@@ -13,7 +13,6 @@ buffer_size = 4096
 class FileInitListener(multiprocessing.Process):
     def __init__(self,
                  device_info_static: deviceInfo.DeviceInfoStatic,
-                 device_info_dynamic: deviceInfo.DeviceInfoDynamic,
                  shared_dict: DictProxy,
                  lock):
         super(FileInitListener, self).__init__()
