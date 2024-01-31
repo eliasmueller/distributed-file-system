@@ -114,8 +114,7 @@ class FolderMonitor:
         for f in files:
             if f.startswith("."):  # Working files could often start with "." we do not want to send this.
                 continue
-            if f.startswith(
-                    "tempversion_"):  # not deliver file changes start with "tempversion_" we do not want to send this.
+            if f.startswith("tempversion_"):  # not deliver file changes start with "tempversion_"
                 continue
             if f.startswith("lock_"):  # to lock a file another file with same name and the prefix lock_ is created.
                 if message_type == "modify":
