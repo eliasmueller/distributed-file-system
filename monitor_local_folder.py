@@ -77,8 +77,12 @@ class FolderMonitor:
         current_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
 
         # adding and modification is the same representation.
-        deleted_files = [f for f in self.file_state if f not in current_state]
-        modified_files = [f for f in current_state if current_state[f] != self.file_state.get(f, 0)]
+        deleted_files = [f for f in self.file_state 
+                         if f not in current_state 
+                         and not os.path.isdir(os.path.join(self.device_info_static.MY_STORAGE, f))]
+        modified_files = [f for f in current_state 
+                          if current_state[f] != self.file_state.get(f, 0) 
+                          and not os.path.isdir(os.path.join(self.device_info_static.MY_STORAGE, f))]
 
         if modified_files:
             self.notify_all_peers_about_file_change("modify", modified_files)
