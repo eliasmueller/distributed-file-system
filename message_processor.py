@@ -107,4 +107,4 @@ def require_extractor(message_payload: str,
                       message_sender_id: str,
                       message_sender_ip: str,
                       require_queue: multiprocessing.Queue):
-    require_queue.put((message_sender_ip, message_sender_id, message_payload.lstrip()))
+    require_queue.put((message_sender_ip, message_sender_id, message_payload))
