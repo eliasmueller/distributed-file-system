@@ -88,8 +88,9 @@ class FolderMonitor:
 
         # attaching copy of sent version in case other peer requests resend
         tempfile_name = f"tempversion_sender_{file_transfer.vector_clock_to_path_string(self.device_info_dynamic.PEER_vector_clock)}_{f}"
-        shutil.copy(os.path.join(self.device_info_static.MY_STORAGE, f),
-                    os.path.join(self.device_info_static.MY_STORAGE, tempfile_name))
+        if message_type != "delete":
+            shutil.copy(os.path.join(self.device_info_static.MY_STORAGE, f),
+                        os.path.join(self.device_info_static.MY_STORAGE, tempfile_name))
 
         self.sent_messages.append(("file transfer " + message_type,
                                    self.device_info_dynamic.PEER_vector_clock, tempfile_name, f))
