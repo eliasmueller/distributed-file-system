@@ -2,6 +2,8 @@ import multiprocessing
 from functools import cmp_to_key
 
 import device_info
+import message_formatter
+import sender as b_send
 import util
 
 BUFFER_SIZE = 4096
@@ -47,6 +49,10 @@ class OrderedMulticastListener(multiprocessing.Process):
                     # hold back check
                     if not self.vector_clock_condition(vector_clock, original_sender_id):
                         print("Holding back message in hold back queue")
+                        b_send.basic_broadcast(self.device_info_static.LAN_BROADCAST_IP,
+                                               self.device_info_static.LAN_BROADCAST_PORT,
+                                               message_formatter.require_message(self.device_info_static,
+                                                                                 self.device_info_dynamic.PEER_vector_clock))
                         continue
                     # remove it from hold back queue
                     self.hold_back_queue.remove(entry)

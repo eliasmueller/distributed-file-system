@@ -13,7 +13,8 @@ from shared_dict_helper import DictKey
 def process_message(device_info_static: device_info.DeviceInfoStatic,
                     device_info_dynamic: device_info.DeviceInfoDynamic,
                     message: str,
-                    shared_queue: multiprocessing.Queue,
+                    election_queue: multiprocessing.Queue,
+                    require_queue: multiprocessing.Queue,
                     shared_dict: DictProxy,
                     lock) -> str:
     message_split = message.split(',')
@@ -36,14 +37,17 @@ def process_message(device_info_static: device_info.DeviceInfoStatic,
         pass
     elif message_type == 'election':
         election_extractor(message_payload, message_sender_id, message_specification, message_sender_ip,
-                           device_info_static, shared_queue)
+                           device_info_static, election_queue)
         pass
+    elif message_type == 'require':
+        require_extractor(message_payload, message_sender_id, message_sender_ip, require_queue)
     else:
         pass
     return ''
 
 
-def request_answerer(device_info_static: device_info.DeviceInfoStatic, device_info_dynamic: device_info.DeviceInfoDynamic,
+def request_answerer(device_info_static: device_info.DeviceInfoStatic,
+                     device_info_dynamic: device_info.DeviceInfoDynamic,
                      message_specification: str) -> str:
     if message_specification == ' peer discovery':
         return message_formatter.response_discovery(device_info_static, device_info_dynamic)
@@ -91,9 +95,16 @@ def election_extractor(message_payload: str,
                        message_specification: str,
                        message_sender_ip: str,
                        device_info_static: device_info.DeviceInfoStatic,
-                       shared_queue: multiprocessing.Queue):
+                       election_queue: multiprocessing.Queue):
     sender_id = int(message_sender_id)
     if device_info_static.PEER_ID != sender_id:
         message = election_message.ElectionMessage(
             sender_id, message_specification, message_payload, message_sender_ip)
-        util.produce_election_message(shared_queue, message)
+        util.produce_election_message(election_queue, message)
+
+
+def require_extractor(message_payload: str,
+                      message_sender_id: str,
+                      message_sender_ip: str,
+                      require_queue: multiprocessing.Queue):
+    require_queue.put((message_sender_ip, message_sender_id, message_payload.lstrip()))

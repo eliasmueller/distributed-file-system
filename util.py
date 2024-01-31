@@ -5,16 +5,16 @@ import pickle
 import election_message
 
 
-def consume(shared_queue: multiprocessing.Queue):
+def consume(election_queue: multiprocessing.Queue):
     # Receive the serialized object from the queue and deserialize it
-    serialized_object = shared_queue.get()
+    serialized_object = election_queue.get()
     complex_object = pickle.loads(serialized_object)
     return complex_object
 
 
-def produce_election_message(shared_queue: multiprocessing.Queue, message: election_message.ElectionMessage):
+def produce_election_message(election_queue: multiprocessing.Queue, message: election_message.ElectionMessage):
     serialized_object = pickle.dumps(message)
-    shared_queue.put(serialized_object)
+    election_queue.put(serialized_object)
 
 
 def get_or_default(dictionary: dict(), key) -> int:

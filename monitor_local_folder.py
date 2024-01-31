@@ -1,9 +1,12 @@
+import ast
 import multiprocessing
 import os
+import shutil
 import time
 from multiprocessing.managers import DictProxy
 
 import device_info
+import file_transfer
 import sender as b_send
 import shared_dict_helper
 import util
@@ -14,18 +17,46 @@ class FolderMonitor:
     def __init__(self,
                  device_info_static: device_info.DeviceInfoStatic,
                  device_info_dynamic: device_info.DeviceInfoDynamic,
-                 shared_queue: multiprocessing.Queue,
+                 require_queue: multiprocessing.Queue,
                  shared_dict: DictProxy,
                  lock):
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
-        self.shared_queue = shared_queue
+        self.require_queue = require_queue
         self.shared_dict = shared_dict
         self.file_state = dict()
         self.is_running = True
         self.lock = lock
+        self.sent_messages = []
 
         self.run()
+
+    def run(self):
+        try:
+            while self.is_running:
+                self.check_folder_changes()
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
+
+    def check_necessary_resends(self):
+        self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
+        if not self.require_queue.empty():
+            (ip, sender_id, last_known_vector_clock) = self.require_queue.get()
+            vector_clock = ast.literal_eval(last_known_vector_clock)
+
+            my_id = self.device_info_static.PEER_ID
+            if my_id in vector_clock.keys():
+                for (message_type, message_vector_clock, tempfile_name, file_name) in self.sent_messages:
+                    if message_vector_clock[my_id] == vector_clock[my_id] + 1:
+                        print(f"received require for {vector_clock} from {sender_id} on {ip}, "
+                              f"resending message with {message_vector_clock}.")
+                        file_transfer.transfer_file(
+                            ip, 7771, self.device_info_static.PEER_ID, self.device_info_static, message_type,
+                            message_vector_clock, tempfile_name, file_name)
+                        break
+                    else:
+                        print(f"received require for {vector_clock} from {sender_id} on {ip}, found no matching message.")
 
     def check_folder_changes(self):
         assert self.device_info_dynamic is not None
@@ -46,14 +77,6 @@ class FolderMonitor:
         self.device_info_dynamic.PEER_file_state = self.file_state
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, self.file_state)
 
-    def run(self):
-        try:
-            while self.is_running:
-                self.check_folder_changes()
-                time.sleep(1)
-        except KeyboardInterrupt:
-            pass
-
     def consistent_ordered_multicast_file_change(self, message_type, f):
         # this is the start of the sending process for an ordered multicast
         # increase own vector clock entry
@@ -62,6 +85,15 @@ class FolderMonitor:
         shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_vector_clock,
                                               self.device_info_dynamic.PEER_vector_clock)
         b_send.reliable_multicast(self.device_info_static, self.device_info_dynamic, message_type, f)
+
+        # attaching copy of sent version in case other peer requests resend
+        tempfile_name = f"tempversion_sender_{file_transfer.vector_clock_to_path_string(self.device_info_dynamic.PEER_vector_clock)}_{f}"
+        shutil.copy(os.path.join(self.device_info_static.MY_STORAGE, f),
+                    os.path.join(self.device_info_static.MY_STORAGE, tempfile_name))
+
+        self.sent_messages.append(("file transfer " + message_type,
+                                   self.device_info_dynamic.PEER_vector_clock, tempfile_name, f))
+        # TODO remove at some point
 
     def notify_all_peers_about_file_change(self, message_type, files):
         print(f"Change detected: {message_type}, {files}")

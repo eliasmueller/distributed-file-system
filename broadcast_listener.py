@@ -15,13 +15,15 @@ class BroadcastListener(multiprocessing.Process):
     def __init__(self,
                  device_info_static: device_info.DeviceInfoStatic,
                  device_info_dynamic: device_info.DeviceInfoDynamic,
-                 shared_queue: multiprocessing.Queue,
+                 election_queue: multiprocessing.Queue,
+                 require_queue: multiprocessing.Queue,
                  shared_dict: DictProxy,
                  lock):
         super(BroadcastListener, self).__init__()
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
-        self.shared_queue = shared_queue
+        self.election_queue = election_queue
+        self.require_queue = require_queue
         self.shared_dict = shared_dict
         # Listening port
         # Create a UDP socket
@@ -53,7 +55,8 @@ class BroadcastListener(multiprocessing.Process):
                     answer = message_processor.process_message(self.device_info_static,
                                                                self.device_info_dynamic,
                                                                data.decode(),
-                                                               self.shared_queue,
+                                                               self.election_queue,
+                                                               self.require_queue,
                                                                self.shared_dict,
                                                                self.lock)
                     if answer:

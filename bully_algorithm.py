@@ -17,13 +17,13 @@ from shared_dict_helper import DictKey
 class BullyAlgorithm(multiprocessing.Process):
     def __init__(self, device_info_static: device_info.DeviceInfoStatic,
                  device_info_dynamic: device_info.DeviceInfoDynamic,
-                 shared_queue: multiprocessing.Queue,
+                 election_queue: multiprocessing.Queue,
                  shared_dict: DictProxy,
                  lock):
         super(BullyAlgorithm, self).__init__()
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
-        self.shared_queue = shared_queue
+        self.election_queue = election_queue
         self.shared_dict = shared_dict
         # Init Bully Properties
         self.peer_id = device_info_static.PEER_ID
@@ -39,8 +39,8 @@ class BullyAlgorithm(multiprocessing.Process):
     def get_device_info_dynamic(self):
         self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
         self.leader_id = self.device_info_dynamic.LEADER_ID
-        if not self.shared_queue.empty():
-            queue_message = util.consume(self.shared_queue)
+        if not self.election_queue.empty():
+            queue_message = util.consume(self.election_queue)
             self.handle_election_message(queue_message)
 
     def update_device_info_dynamic(self, message: election_message.ElectionMessage):
