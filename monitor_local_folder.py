@@ -34,6 +34,7 @@ class FolderMonitor:
     def run(self):
         try:
             while self.is_running:
+                self.check_necessary_resends()
                 self.check_folder_changes()
                 time.sleep(1)
         except KeyboardInterrupt:
