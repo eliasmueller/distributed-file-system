@@ -54,23 +54,22 @@ class FolderMonitor:
 
         if not self.require_queue.empty():
             (ip, sender_id, last_known_vector_clock) = self.require_queue.get()
-            vector_clock = ast.literal_eval(last_known_vector_clock)
+            required_vector_clock = ast.literal_eval(last_known_vector_clock)
 
-            my_id = self.device_info_static.PEER_ID
-            if my_id in vector_clock.keys():
+            if self.device_info_static.PEER_ID in required_vector_clock.keys():
                 for (filename, message_vector_clock, temp_filename, sender_id, message_type,
                      original_sender_id) in self.sent_and_received_messages:
                     # TODO actually check _every_ delivered message, also check for the entire clock and sort
-                    if message_vector_clock[my_id] == vector_clock[my_id] + 1:
-                        print(f"received require for {vector_clock} from {sender_id} on {ip}, "
+                    if self.vector_clock_condition(message_vector_clock,
+                                                   self.device_info_static.PEER_ID,
+                                                   required_vector_clock):
+                        print(f"received require for {required_vector_clock} from {sender_id} on {ip}, "
                               f"resending message with {message_vector_clock}.")
                         file_transfer.transfer_file(
                             ip, 7771, self.device_info_static.PEER_ID, self.device_info_static, message_type,
                             message_vector_clock, temp_filename, filename)
-                        break
-                    else:
-                        print(
-                            f"received require for {vector_clock} from {sender_id} on {ip}, found no matching message.")
+                        return
+                print(f"received require for {required_vector_clock} from {sender_id} on {ip}, found no matching message.")
 
     def check_folder_changes(self):
         assert self.device_info_dynamic is not None
@@ -164,3 +163,13 @@ class FolderMonitor:
             del self.device_info_dynamic.LOCKED_FILES[filename]
             self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
         return return_val
+
+    def vector_clock_condition(self, message_vector_clock, my_id, required_vector_clock) -> bool:
+        if util.get_or_default(message_vector_clock, my_id) != util.get_or_default(required_vector_clock, my_id) + 1:
+            return False
+        for peer in self.device_info_dynamic.PEERS:
+            if peer == my_id:
+                continue
+            if util.get_or_default(message_vector_clock, peer) > util.get_or_default(required_vector_clock, peer):
+                return False
+        return True
