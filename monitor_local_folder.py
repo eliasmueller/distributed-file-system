@@ -69,6 +69,17 @@ class FolderMonitor:
                             message_vector_clock, temp_filename, filename)
                         return
                 print(f"received require for {required_vector_clock} from {sender_id} on {ip}, found no matching message.")
+        else:
+            # TODO make this handle the deletion of tempfile_sender files correctly. 
+            # Right now it just deletes them all and also tries to delete already deleted files
+            for (filename, message_vector_clock, temp_filename, sender_id, message_type,
+                     original_sender_id) in self.sent_and_received_messages:
+                try:
+                    os.remove(os.path.join(self.device_info_static.MY_STORAGE, temp_filename))
+                except:
+                    pass
+
+                
 
     def check_folder_changes(self):
         assert self.device_info_dynamic is not None
