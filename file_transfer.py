@@ -56,11 +56,17 @@ def listen_for_file(listen_socket, device_info_static: device_info.DeviceInfoSta
 
     message_type = formatter.get_message_type(received[0])
     print(f"Receiving message with {message_type} file {filename} and vector clock {vector_clock}.")
-    temp_filename = f"tempversion_{vector_clock_to_path_string(vector_clock)}_{filename}"
+
+    temp_version_number = 1
+    vector_clock_str = vector_clock_to_path_string(vector_clock)
+    temp_filename = f"tempversion_{vector_clock_str}_version{temp_version_number}_{filename}"
+    filepath = f"{device_info_static.MY_STORAGE}/{temp_filename}"
+    while os.path.exists(filepath):
+        temp_version_number = temp_version_number + 1
+        temp_filename = f"tempversion_{vector_clock_str}_version{temp_version_number}_{filename}"
+        filepath = f"{device_info_static.MY_STORAGE}/{temp_filename}"
 
     if message_type != " file transfer delete":
-
-        filepath = f"{device_info_static.MY_STORAGE}/{temp_filename}"
 
         # make sure that the temp file exists + write beginning of file
         with open(filepath, "w") as f:
