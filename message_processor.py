@@ -40,7 +40,7 @@ def process_message(device_info_static: device_info.DeviceInfoStatic,
                            device_info_static, election_queue)
         pass
     elif message_type == 'require':
-        require_extractor(message_split[4].split('vector clock :')[0].strip(), message_sender_id, message_sender_ip, require_queue)
+        require_extractor(message_split[4].split('vector_clock: ')[0].strip(), message_sender_id, message_sender_ip, require_queue)
     else:
         pass
     return ''
