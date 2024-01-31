@@ -17,7 +17,7 @@ def produce_election_message(election_queue: multiprocessing.Queue, message: ele
     election_queue.put(serialized_object)
 
 
-def get_or_default(dictionary: dict(), key) -> int:
+def get_or_default(dictionary: dict, key) -> int:
     value = 0
     if key in dictionary:
         value = dictionary.get(key)
@@ -33,3 +33,20 @@ def delete_file(filename: str, storage_path: str):
     filepath_file = f"{storage_path}/{filename}"
     if os.path.exists(filepath_file):
         os.remove(filepath_file)
+
+
+def compare_vector_clocks(left_message, right_message):
+    l_filename, l_vector_clock, l_temp_filename, l_sender_id, l_message_type, l_original_sender_id = left_message
+    r_filename, r_vector_clock, r_temp_filename, r_sender_id, r_message_type, r_original_sender_id = right_message
+
+    difference = 0
+    for key, value in l_vector_clock.items():
+        difference = difference + value - get_or_default(r_vector_clock, key)
+
+    if difference < 0:
+        return -1
+    elif difference > 0:
+        return 1
+    else:
+        return -1
+    # return difference / abs(difference)

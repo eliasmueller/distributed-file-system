@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import shutil
 import time
+from functools import cmp_to_key
 from multiprocessing.managers import DictProxy
 
 import device_info
@@ -18,16 +19,18 @@ class FolderMonitor:
                  device_info_static: device_info.DeviceInfoStatic,
                  device_info_dynamic: device_info.DeviceInfoDynamic,
                  require_queue: multiprocessing.Queue,
+                 delivered_queue: multiprocessing.Queue,
                  shared_dict: DictProxy,
                  lock):
         self.device_info_static = device_info_static
         self.device_info_dynamic = device_info_dynamic
         self.require_queue = require_queue
+        self.delivered_queue = delivered_queue
         self.shared_dict = shared_dict
         self.file_state = dict()
         self.is_running = True
         self.lock = lock
-        self.sent_messages = []
+        self.sent_and_received_messages = []
 
         self.run()
 
@@ -42,22 +45,32 @@ class FolderMonitor:
 
     def check_necessary_resends(self):
         self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
+        # add externally added messages to the local representation
+        while not self.delivered_queue.empty():
+            message = self.delivered_queue.get()
+            self.sent_and_received_messages.append(message)
+            self.sent_and_received_messages = sorted(self.sent_and_received_messages,
+                                                     key=cmp_to_key(util.compare_vector_clocks))
+
         if not self.require_queue.empty():
             (ip, sender_id, last_known_vector_clock) = self.require_queue.get()
             vector_clock = ast.literal_eval(last_known_vector_clock)
 
             my_id = self.device_info_static.PEER_ID
             if my_id in vector_clock.keys():
-                for (message_type, message_vector_clock, tempfile_name, file_name) in self.sent_messages:
+                for (filename, message_vector_clock, temp_filename, sender_id, message_type,
+                     original_sender_id) in self.sent_and_received_messages:
+                    # TODO actually check _every_ delivered message, also check for the entire clock and sort
                     if message_vector_clock[my_id] == vector_clock[my_id] + 1:
                         print(f"received require for {vector_clock} from {sender_id} on {ip}, "
                               f"resending message with {message_vector_clock}.")
                         file_transfer.transfer_file(
                             ip, 7771, self.device_info_static.PEER_ID, self.device_info_static, message_type,
-                            message_vector_clock, tempfile_name, file_name)
+                            message_vector_clock, temp_filename, filename)
                         break
                     else:
-                        print(f"received require for {vector_clock} from {sender_id} on {ip}, found no matching message.")
+                        print(
+                            f"received require for {vector_clock} from {sender_id} on {ip}, found no matching message.")
 
     def check_folder_changes(self):
         assert self.device_info_dynamic is not None
@@ -88,13 +101,14 @@ class FolderMonitor:
         b_send.reliable_multicast(self.device_info_static, self.device_info_dynamic, message_type, f)
 
         # attaching copy of sent version in case other peer requests resend
-        tempfile_name = f"tempversion_sender_{file_transfer.vector_clock_to_path_string(self.device_info_dynamic.PEER_vector_clock)}_{f}"
+        temp_filename = f"tempversion_sender_{file_transfer.vector_clock_to_path_string(self.device_info_dynamic.PEER_vector_clock)}_{f}"
         if message_type != "delete":
             shutil.copy(os.path.join(self.device_info_static.MY_STORAGE, f),
-                        os.path.join(self.device_info_static.MY_STORAGE, tempfile_name))
+                        os.path.join(self.device_info_static.MY_STORAGE, temp_filename))
 
-        self.sent_messages.append(("file transfer " + message_type,
-                                   self.device_info_dynamic.PEER_vector_clock, tempfile_name, f))
+        self.sent_and_received_messages.append((f, self.device_info_dynamic.PEER_vector_clock, temp_filename,
+                                                self.device_info_static.PEER_ID, message_type,
+                                                self.device_info_static.PEER_ID))
         # TODO remove at some point
 
     def notify_all_peers_about_file_change(self, message_type, files):

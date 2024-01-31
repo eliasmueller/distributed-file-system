@@ -19,6 +19,7 @@ def establish_listeners(_device_info_static: device_info.DeviceInfoStatic,
                         _device_info_dynamic: device_info.DeviceInfoDynamic,
                         _election_queue: multiprocessing.Queue,
                         _require_queue: multiprocessing.Queue,
+                        _delivered_queue: multiprocessing.Queue,
                         _shared_dict: DictProxy,
                         _lock):
     _listeners = []
@@ -41,7 +42,7 @@ def establish_listeners(_device_info_static: device_info.DeviceInfoStatic,
     p_reliable_multicast_listen.start()
 
     p_ordered_multicast_listen = ordered_listen.OrderedMulticastListener(
-        _device_info_static, _device_info_dynamic, r_deliver_queue, o_deliver_queue, _shared_dict, _lock)
+        _device_info_static, _device_info_dynamic, r_deliver_queue, o_deliver_queue, _delivered_queue, _shared_dict, _lock)
     _listeners.append(p_ordered_multicast_listen)
     p_ordered_multicast_listen.start()
 
@@ -68,10 +69,11 @@ def start_bully(_device_info_static: device_info.DeviceInfoStatic,
 def start_folder_monitor(_device_info_static: device_info.DeviceInfoStatic,
                          _device_info_dynamic: device_info.DeviceInfoDynamic,
                          _require_queue: multiprocessing.Queue,
+                         _delivered_queue: multiprocessing.Queue,
                          _shared_dict: DictProxy,
                          _lock):
     _p_monitor = multiprocessing.Process(target=monitor_local_folder.FolderMonitor, args=(
-        _device_info_static, _device_info_dynamic, _require_queue, _shared_dict, _lock))
+        _device_info_static, _device_info_dynamic, _require_queue, _delivered_queue, _shared_dict, _lock))
     _p_monitor.daemon = True
     _p_monitor.start()
     return _p_monitor
@@ -103,9 +105,11 @@ if __name__ == '__main__':
 
     election_queue = multiprocessing.Queue()
     require_queue = multiprocessing.Queue()
+    delivered_queue = multiprocessing.Queue()
 
     listeners = establish_listeners(
-        device_info_static, device_info_dynamic, election_queue, require_queue, shared_device_info_dynamic, lock)
+        device_info_static, device_info_dynamic, election_queue, require_queue,
+        delivered_queue, shared_device_info_dynamic, lock)
 
     p_discovery = multiprocessing.Process(target=discovery.discover_peers, args=(
         device_info_static, device_info_dynamic, shared_device_info_dynamic, lock))
@@ -117,7 +121,7 @@ if __name__ == '__main__':
 
     # start monitoring file changes and elections after discovery
     p_monitor = start_folder_monitor(
-        device_info_static, device_info_dynamic, require_queue, shared_device_info_dynamic, lock)
+        device_info_static, device_info_dynamic, require_queue, delivered_queue, shared_device_info_dynamic, lock)
     p_bully = start_bully(device_info_static, device_info_dynamic, election_queue, shared_device_info_dynamic, lock)
 
     # device_info_dynamic = shared_dict.get("device_info_dynamic")
