@@ -6,6 +6,7 @@ from multiprocessing.managers import DictProxy
 import device_info
 import file_transfer
 import shared_dict_helper
+import util
 from shared_dict_helper import DictKey
 
 BUFFER_SIZE = 4096
@@ -38,6 +39,7 @@ class FileInitListener(multiprocessing.Process):
 
     def file_init_listener(self):
         # TODO self destruct after 10s
+        self.clean_up_old_temp_files()
         while self.isRunning:
             filename, vector_clock, temp_filename, sender_id, message_type, orig_sender_id = (
                 file_transfer.listen_for_file(self.listen_socket, self.device_info_static))
@@ -48,3 +50,8 @@ class FileInitListener(multiprocessing.Process):
 
             self.file_state.update({filename: os.path.getmtime(filepath_file)})
             shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.peer_file_state, self.file_state)
+
+    def clean_up_old_temp_files(self):
+        for f in util.get_folder_state(self.device_info_static.MY_STORAGE).keys():
+            if f.startswith(".tempversion_") or f.startswith("tempversion_"):
+                util.delete_file(f, self.device_info_static.MY_STORAGE)
