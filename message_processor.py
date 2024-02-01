@@ -40,7 +40,8 @@ def process_message(device_info_static: device_info.DeviceInfoStatic,
                            device_info_static, election_queue)
         pass
     elif message_type == 'require':
-        require_extractor(message.split('vector_clock: ')[1].strip(), message_sender_id, message_sender_ip, require_queue)
+        require_extractor(message.split('vector_clock: ')[1].strip(), message_sender_id, message_sender_ip,
+                          require_queue)
     else:
         pass
     return ''
@@ -60,11 +61,14 @@ def update_extractor(message_sender_id: str, message_sender_ip: str, shared_dict
     peer_id = int(message_sender_id)
     peers = shared_dict[DictKey.peers.value]
     peer_ip_dict = shared_dict[DictKey.peer_ip_dict.value]
+    vector_clock = shared_dict[DictKey.peer_vector_clock.value]
     if peer_id not in peers:
         peers.append(peer_id)
         peer_ip_dict[peer_id] = message_sender_ip
         shared_dict_helper.update_shared_dict(shared_dict, lock, shared_dict_helper.DictKey.peer_ip_dict, peer_ip_dict)
         shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peers, peers)
+        shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peer_vector_clock,
+                                              vector_clock.update({peer_id: 0}))
         print(f"Updating known peers: {peers}")
 
 
