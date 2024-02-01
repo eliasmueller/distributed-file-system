@@ -4,6 +4,7 @@ import socket
 
 import device_info
 import message_formatter as formatter
+import util
 
 BUFFER_SIZE = 4096
 
@@ -58,7 +59,7 @@ def listen_for_file(listen_socket, device_info_static: device_info.DeviceInfoSta
     print(f"Receiving message with {message_type} file {filename} and vector clock {vector_clock}.")
 
     temp_version_number = 1
-    vector_clock_str = vector_clock_to_path_string(vector_clock)
+    vector_clock_str = util.vector_clock_to_path_string(vector_clock)
     temp_filename = f"tempversion_{vector_clock_str}_version{temp_version_number}_{filename}"
     filepath = f"{device_info_static.MY_STORAGE}/{temp_filename}"
     while os.path.exists(filepath):
@@ -97,14 +98,3 @@ def transfer_entire_folder(device_info_static: device_info.DeviceInfoStatic,
         transfer_file(ip, 7772, device_info_static.PEER_ID, device_info_static, "file transfer modify",
                       device_info_dynamic.PEER_vector_clock, f, f)
 
-
-def vector_clock_to_path_string(vector_clock: dict):
-    vc_str = str(vector_clock)
-    vc_str = vc_str.replace(':', '_')
-    vc_str = vc_str.replace('(', '_')
-    vc_str = vc_str.replace('{', '_')
-    vc_str = vc_str.replace(')', '_')
-    vc_str = vc_str.replace('}', '_')
-    vc_str = vc_str.replace(',', '_')
-    vc_str = vc_str.replace(' ', '')
-    return vc_str

@@ -64,7 +64,7 @@ class OrderedMulticastListener(multiprocessing.Process):
                     # store message that it can be resent if other peer lost it
                     self.delivered_queue.put(entry)
                     # co-deliver message
-                    deliver_list.append((filename, temp_filename, message_type))
+                    deliver_list.append((filename, temp_filename, message_type, vector_clock))
                 # ordered multicast delivery
                 for entry in deliver_list:
                     self.o_deliver_queue.put(entry)

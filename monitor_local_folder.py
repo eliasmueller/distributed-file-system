@@ -107,7 +107,7 @@ class FolderMonitor:
         b_send.reliable_multicast(self.device_info_static, self.device_info_dynamic, message_type, f)
 
         # attaching copy of sent version in case other peer requests resend
-        temp_filename = f".tempversion_sender_{file_transfer.vector_clock_to_path_string(self.device_info_dynamic.PEER_vector_clock)}_{f}"
+        temp_filename = f".tempversion_sender_{util.vector_clock_to_path_string(self.device_info_dynamic.PEER_vector_clock)}_{f}"
         if message_type != "delete":
             shutil.copy(os.path.join(self.device_info_static.MY_STORAGE, f),
                         os.path.join(self.device_info_static.MY_STORAGE, temp_filename))

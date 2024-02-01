@@ -50,3 +50,15 @@ def compare_vector_clocks(left_message, right_message):
     else:
         return -1
     # return difference / abs(difference)
+
+
+def vector_clock_to_path_string(vector_clock: dict):
+    vc_str = str(vector_clock)
+    vc_str = vc_str.replace(':', '_')
+    vc_str = vc_str.replace('(', '_')
+    vc_str = vc_str.replace('{', '_')
+    vc_str = vc_str.replace(')', '_')
+    vc_str = vc_str.replace('}', '_')
+    vc_str = vc_str.replace(',', '_')
+    vc_str = vc_str.replace(' ', '')
+    return vc_str
