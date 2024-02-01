@@ -68,7 +68,11 @@ class FolderMonitor:
                             ip, 7771, self.device_info_static.PEER_ID, self.device_info_static, message_type,
                             message_vector_clock, temp_filename, filename)
                         return
-                print(f"received require for {required_vector_clock} from {sender_id} on {ip}, found no matching message.") 
+                print(
+                    f"received require for {required_vector_clock} from {sender_id} on {ip}, found no matching message.")
+        if len(self.sent_and_received_messages) > 10:
+            (f, vc, temp_filename, sender_id, message_type, original_sender_id) = self.sent_and_received_messages.pop()
+            util.delete_file(temp_filename, self.device_info_static.MY_STORAGE)
 
     def check_folder_changes(self):
         assert self.device_info_dynamic is not None
@@ -77,11 +81,11 @@ class FolderMonitor:
         current_state = util.get_folder_state(self.device_info_static.MY_STORAGE)
 
         # adding and modification is the same representation.
-        deleted_files = [f for f in self.file_state 
-                         if f not in current_state 
+        deleted_files = [f for f in self.file_state
+                         if f not in current_state
                          and not os.path.isdir(os.path.join(self.device_info_static.MY_STORAGE, f))]
-        modified_files = [f for f in current_state 
-                          if current_state[f] != self.file_state.get(f, 0) 
+        modified_files = [f for f in current_state
+                          if current_state[f] != self.file_state.get(f, 0)
                           and not os.path.isdir(os.path.join(self.device_info_static.MY_STORAGE, f))]
 
         if modified_files:
@@ -111,7 +115,6 @@ class FolderMonitor:
         self.sent_and_received_messages.append((f, self.device_info_dynamic.PEER_vector_clock, temp_filename,
                                                 self.device_info_static.PEER_ID, message_type,
                                                 self.device_info_static.PEER_ID))
-        # TODO remove at some point
 
     def notify_all_peers_about_file_change(self, message_type, files):
         print(f"Change detected: {message_type}, {files}")
@@ -145,12 +148,11 @@ class FolderMonitor:
             shared_dict_helper.update_shared_dict(self.shared_dict, self.lock, DictKey.locked_files,
                                                   self.device_info_dynamic.LOCKED_FILES)
         else:
-            os.remove(f"{self.device_info_static.MY_STORAGE}/{filename}")
+            util.delete_file(filename, self.device_info_static.MY_STORAGE)
 
     def unlock_file(self, filename: str, discard: bool) -> bool:
         if not discard:  # when the lock file is deleted we don't delete anything else
-            filepath = f"{self.device_info_static.MY_STORAGE}/lock_{filename}"
-            os.remove(filepath)
+            util.delete_file(f"lock_{filename}", self.device_info_static.MY_STORAGE)
         # if there has been no remote change we simply continue
         if discard or self.device_info_dynamic.LOCKED_FILES[filename] != "remote":
             print(f"Unlocking file {filename} locally.")
