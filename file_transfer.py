@@ -1,6 +1,7 @@
 import ast
 import os.path
 import socket
+import time
 
 import device_info
 import message_formatter as formatter
@@ -24,6 +25,7 @@ def transfer_file(ip,
     filepath = f"{device_info_static.MY_STORAGE}/{file_location_name}"
     if not os.path.isfile(filepath):
         message_type = "delete"
+    time.sleep(0.5)
     tcp_socket_sender.send(str.encode(formatter.get_file_transfer_message(device_info_static,
                                                                           message_type,
                                                                           filename,
