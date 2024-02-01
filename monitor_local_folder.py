@@ -119,7 +119,7 @@ class FolderMonitor:
     def notify_all_peers_about_file_change(self, message_type, files):
         print(f"Change detected: {message_type}, {files}")
         for f in files:
-            if f.startswith("."):  # Working files could often start with "." we do not want to send this.
+            if f.startswith(".") or f.startswith("~"):  # Working files. We do not want to send this.
                 continue
             if f.startswith("tempversion_"):  # not deliver file changes start with "tempversion_"
                 continue

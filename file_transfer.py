@@ -93,7 +93,7 @@ def transfer_entire_folder(device_info_static: device_info.DeviceInfoStatic,
                            device_info_dynamic: device_info.DeviceInfoDynamic, ip):
     folder_state = device_info_dynamic.PEER_file_state
     for f in folder_state.keys():
-        if f.startswith(".") or  f.startswith("tempversion_") or f.startswith("lock_"):
+        if f.startswith(".") or f.startswith("~") or f.startswith("tempversion_") or f.startswith("lock_"):
             continue
         # We use the current clock at this will be discarded anyhow in this initial message exchange
         transfer_file(ip, 7772, device_info_static.PEER_ID, device_info_static, "file transfer modify",
