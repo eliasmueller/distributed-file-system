@@ -67,8 +67,8 @@ def update_extractor(message_sender_id: str, message_sender_ip: str, shared_dict
         peer_ip_dict[peer_id] = message_sender_ip
         shared_dict_helper.update_shared_dict(shared_dict, lock, shared_dict_helper.DictKey.peer_ip_dict, peer_ip_dict)
         shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peers, peers)
-        shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peer_vector_clock,
-                                              vector_clock.update({peer_id: 0}))
+        vector_clock = vector_clock.update({peer_id: 0})
+        shared_dict_helper.update_shared_dict(shared_dict, lock, DictKey.peer_vector_clock, vector_clock)
         print(f"Updating known peers: {peers}")
 
 
