@@ -68,18 +68,7 @@ class FolderMonitor:
                             ip, 7771, self.device_info_static.PEER_ID, self.device_info_static, message_type,
                             message_vector_clock, temp_filename, filename)
                         return
-                print(f"received require for {required_vector_clock} from {sender_id} on {ip}, found no matching message.")
-        else:
-            # TODO make this handle the deletion of tempfile_sender files correctly. 
-            # Right now it just deletes them all and also tries to delete already deleted files
-            for (filename, message_vector_clock, temp_filename, sender_id, message_type,
-                     original_sender_id) in self.sent_and_received_messages:
-                try:
-                    os.remove(os.path.join(self.device_info_static.MY_STORAGE, temp_filename))
-                except:
-                    pass
-
-                
+                print(f"received require for {required_vector_clock} from {sender_id} on {ip}, found no matching message.") 
 
     def check_folder_changes(self):
         assert self.device_info_dynamic is not None
@@ -114,7 +103,7 @@ class FolderMonitor:
         b_send.reliable_multicast(self.device_info_static, self.device_info_dynamic, message_type, f)
 
         # attaching copy of sent version in case other peer requests resend
-        temp_filename = f"tempversion_sender_{file_transfer.vector_clock_to_path_string(self.device_info_dynamic.PEER_vector_clock)}_{f}"
+        temp_filename = f".tempversion_sender_{file_transfer.vector_clock_to_path_string(self.device_info_dynamic.PEER_vector_clock)}_{f}"
         if message_type != "delete":
             shutil.copy(os.path.join(self.device_info_static.MY_STORAGE, f),
                         os.path.join(self.device_info_static.MY_STORAGE, temp_filename))
