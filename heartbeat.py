@@ -56,7 +56,8 @@ class Heartbeat:
                     print("Heartbeat answer received")
                     sender_ip = formatter.get_sender_ip(response)
                     if sender_ip != self.leader_ip:
-                        raise Exception("Received heartbeat response from non leader. This is not allowed")
+                        print("Received heartbeat response from non leader. This should not be happening")
+                        continue
 
     def reset_leader_information(self):
         self.leader_ip = None
@@ -67,7 +68,7 @@ class Heartbeat:
         self.peer_ip_dict = self.shared_dict[DictKey.peer_ip_dict.value]
         self.leader_id = self.shared_dict[DictKey.leader_id.value]
         if self.leader_id is not None:
-            self.leader_ip = self.peer_ip_dict[self.leader_id]
+                self.leader_ip = self.peer_ip_dict[self.leader_id]
         else:
             self.leader_ip = None
 
