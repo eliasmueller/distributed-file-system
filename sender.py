@@ -1,4 +1,5 @@
 import socket
+import time
 
 import device_info
 import file_transfer
@@ -37,7 +38,7 @@ def basic_multicast(device_info_static: device_info.DeviceInfoStatic,
                                         message_type="file transfer " + message_type,
                                         vector_clock=device_info_dynamic.PEER_vector_clock,
                                         file_location_name=file_name, filename=file_name)
-
+            time.sleep(0.5)
 
 def basic_multicast_for_reliable_resent(device_info_static: device_info.DeviceInfoStatic, original_sender_id: int,
                                         device_info_dynamic: device_info.DeviceInfoDynamic, vector_clock: dict,

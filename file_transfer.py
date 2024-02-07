@@ -1,9 +1,11 @@
 import ast
 import os.path
 import socket
+import time
 
 import device_info
 import message_formatter as formatter
+import util
 
 BUFFER_SIZE = 4096
 
@@ -58,12 +60,12 @@ def listen_for_file(listen_socket, device_info_static: device_info.DeviceInfoSta
     print(f"Receiving message with {message_type} file {filename} and vector clock {vector_clock}.")
 
     temp_version_number = 1
-    vector_clock_str = vector_clock_to_path_string(vector_clock)
-    temp_filename = f"tempversion_{vector_clock_str}_version{temp_version_number}_{filename}"
+    vector_clock_str = util.vector_clock_to_path_string(vector_clock)
+    temp_filename = f".tempversion_{vector_clock_str}_version{temp_version_number}_{filename}"
     filepath = f"{device_info_static.MY_STORAGE}/{temp_filename}"
     while os.path.exists(filepath):
         temp_version_number = temp_version_number + 1
-        temp_filename = f"tempversion_{vector_clock_str}_version{temp_version_number}_{filename}"
+        temp_filename = f".tempversion_{vector_clock_str}_version{temp_version_number}_{filename}"
         filepath = f"{device_info_static.MY_STORAGE}/{temp_filename}"
 
     if message_type != " file transfer delete":
@@ -91,18 +93,9 @@ def transfer_entire_folder(device_info_static: device_info.DeviceInfoStatic,
                            device_info_dynamic: device_info.DeviceInfoDynamic, ip):
     folder_state = device_info_dynamic.PEER_file_state
     for f in folder_state.keys():
+        if f.startswith(".") or f.startswith("~") or f.startswith(".tempversion_") or f.startswith("lock_"):
+            continue
         # We use the current clock at this will be discarded anyhow in this initial message exchange
         transfer_file(ip, 7772, device_info_static.PEER_ID, device_info_static, "file transfer modify",
                       device_info_dynamic.PEER_vector_clock, f, f)
 
-
-def vector_clock_to_path_string(vector_clock: dict):
-    vc_str = str(vector_clock)
-    vc_str = vc_str.replace(':', '_')
-    vc_str = vc_str.replace('(', '_')
-    vc_str = vc_str.replace('{', '_')
-    vc_str = vc_str.replace(')', '_')
-    vc_str = vc_str.replace('}', '_')
-    vc_str = vc_str.replace(',', '_')
-    vc_str = vc_str.replace(' ', '')
-    return vc_str

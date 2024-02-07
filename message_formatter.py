@@ -39,6 +39,10 @@ def get_file_transfer_message(device_info_static: device_info.DeviceInfoStatic, 
     return f'update, {message_type}, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, originalSenderID: {original_sender_id}, <SEPARATOR>{filename}<SEPARATOR>{vector_clock}<SEPARATOR>'
 
 
+def require_message(device_info_static: device_info.DeviceInfoStatic, last_known_vector_clock: dict) -> str:
+    return f'require, lost, senderIP: {device_info_static.MY_IP}, senderID: {device_info_static.PEER_ID}, vector_clock: {last_known_vector_clock}'
+
+
 def is_leader(message: str) -> bool:
     return message.split(',')[0] == "election" and message.split(',')[1] == " leader"
 

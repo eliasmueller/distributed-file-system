@@ -2,6 +2,8 @@ import multiprocessing
 from functools import cmp_to_key
 
 import device_info
+import message_formatter
+import sender as b_send
 import util
 
 BUFFER_SIZE = 4096
@@ -13,6 +15,7 @@ class OrderedMulticastListener(multiprocessing.Process):
                  device_info_dynamic: device_info.DeviceInfoDynamic,
                  receive_queue: multiprocessing.Queue,
                  deliver_queue: multiprocessing.Queue,
+                 delivered_queue: multiprocessing.Queue,
                  shared_dict: multiprocessing.managers.DictProxy,
                  lock):
         super(OrderedMulticastListener, self).__init__()
@@ -20,6 +23,7 @@ class OrderedMulticastListener(multiprocessing.Process):
         self.device_info_dynamic = device_info_dynamic
         self.r_deliver_queue = receive_queue
         self.o_deliver_queue = deliver_queue
+        self.delivered_queue = delivered_queue
         self.shared_dict = shared_dict
         self.lock = lock
         self.isRunning = True
@@ -39,7 +43,7 @@ class OrderedMulticastListener(multiprocessing.Process):
                 # add to hold back queue
                 self.hold_back_queue.append(message)
 
-                self.hold_back_queue = sorted(self.hold_back_queue, key=cmp_to_key(self.compare_vector_clocks))
+                self.hold_back_queue = sorted(self.hold_back_queue, key=cmp_to_key(util.compare_vector_clocks))
                 deliver_list = []
                 # check if we can deliver the message or if we need to hold the changes back in the queue a bit longer
                 for entry in self.hold_back_queue.copy():
@@ -47,14 +51,20 @@ class OrderedMulticastListener(multiprocessing.Process):
                     # hold back check
                     if not self.vector_clock_condition(vector_clock, original_sender_id):
                         print("Holding back message in hold back queue")
+                        b_send.basic_broadcast(self.device_info_static.LAN_BROADCAST_IP,
+                                               self.device_info_static.LAN_BROADCAST_PORT,
+                                               message_formatter.require_message(self.device_info_static,
+                                                                                 self.device_info_dynamic.PEER_vector_clock))
                         continue
                     # remove it from hold back queue
                     self.hold_back_queue.remove(entry)
 
                     self.device_info_dynamic.increase_vector_clock_entry(original_sender_id, 1)
                     self.device_info_dynamic.update_entire_shared_dict(self.shared_dict, self.lock)
+                    # store message that it can be resent if other peer lost it
+                    self.delivered_queue.put(entry)
                     # co-deliver message
-                    deliver_list.append((filename, temp_filename, message_type))
+                    deliver_list.append((filename, temp_filename, message_type, vector_clock))
                 # ordered multicast delivery
                 for entry in deliver_list:
                     self.o_deliver_queue.put(entry)
@@ -78,21 +88,7 @@ class OrderedMulticastListener(multiprocessing.Process):
                 return False
         return True
 
-    def compare_vector_clocks(self, left_message, right_message):
-        l_filename, l_vector_clock, l_temp_filename, l_sender_id, l_message_type, l_original_sender_id = left_message
-        r_filename, r_vector_clock, r_temp_filename, r_sender_id, r_message_type, r_original_sender_id = right_message
 
-        difference = 0
-        for key, value in l_vector_clock.items():
-            difference = difference + value - util.get_or_default(r_vector_clock, key)
-
-        if difference < 0:
-            return -1
-        elif difference > 0:
-            return 1
-        else:
-            return -1
-        # return difference / abs(difference)
 
     def update_device_info_dynamic(self):
         self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)

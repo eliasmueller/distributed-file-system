@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+import shutil
 from multiprocessing.managers import DictProxy
 
 import device_info
@@ -37,16 +38,16 @@ class FileListener(multiprocessing.Process):
             try:
                 self.device_info_dynamic.get_update_from_shared_dict(self.shared_dict)
                 if self.hold_back_locked_files:
-                    for (file_name, temp_filename, message_type) in self.hold_back_locked_files:
+                    for (file_name, temp_filename, message_type, vector_clock) in self.hold_back_locked_files:
                         if not self.check_locked_file(file_name):
-                            self.update_file_from_tempfile(file_name, temp_filename, message_type)
+                            self.update_file_from_tempfile(file_name, temp_filename, message_type, vector_clock)
                 # receive ordered reliable multicast delivery
-                (file_name, temp_filename, message_type) = self.o_deliver_queue.get()
+                (file_name, temp_filename, message_type, vector_clock) = self.o_deliver_queue.get()
                 # application has message
                 if temp_filename:
                     self.update_device_info_dynamic()
                     if self.check_locked_file(file_name):
-                        self.hold_back_locked_files.append((file_name, temp_filename, message_type))
+                        self.hold_back_locked_files.append((file_name, temp_filename, message_type, vector_clock))
                         print(f"Not applying received file changes because file is locked locally.")
                     else:
                         print(f"Received file changes")
@@ -54,7 +55,8 @@ class FileListener(multiprocessing.Process):
                             util.delete_file(file_name, self.device_info_static.MY_STORAGE)
                             util.delete_file(temp_filename, self.device_info_static.MY_STORAGE)
                         else:
-                            self.update_file_from_tempfile(file_name, temp_filename, self.device_info_static.MY_STORAGE)
+                            self.update_file_from_tempfile(file_name, temp_filename, self.device_info_static.MY_STORAGE,
+                                                           vector_clock)
                         self.update_device_info_dynamic()
 
             except KeyboardInterrupt:
@@ -62,10 +64,15 @@ class FileListener(multiprocessing.Process):
             except Exception:
                 continue
 
-    def update_file_from_tempfile(self, filename: str, temp_filename: str, storage_path: str):
+    def update_file_from_tempfile(self, filename: str, temp_filename: str, storage_path: str, vector_clock: dict):
         # override file
         filepath_file = f"{storage_path}/{filename}"
         filepath_temp = f"{storage_path}/{temp_filename}"
+
+        # each peer should be able to retransmit any lost message he delivered
+        filename_sender_temp = f".tempversion_sender_{util.vector_clock_to_path_string(vector_clock)}_{filename}"
+        filepath_temp_sender = f"{storage_path}/{filename_sender_temp}"
+        shutil.copy(filepath_temp, filepath_temp_sender)
 
         os.replace(filepath_temp, filepath_file)
 
