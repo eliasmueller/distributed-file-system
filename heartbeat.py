@@ -73,9 +73,12 @@ class Heartbeat:
             self.leader_ip = None
 
     def send_heartbeat_to_leader(self):
-        self.unicast_socket_sender.sendto(str.encode(formatter.request_heartbeat_message(self.device_info_static)),
+        try:
+            self.unicast_socket_sender.sendto(str.encode(formatter.request_heartbeat_message(self.device_info_static)),
                                           (self.leader_ip, self.heartbeat_port))
-        print(f"Heartbeat sent to leader")
+            print(f"Heartbeat sent to leader")
+        except Exception:
+            pass
 
     def leader_receive_and_reply(self):
         heartbeat_timestamps = {value: datetime.now() for value in self.peer_ip_dict.values()}
